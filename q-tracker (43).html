@@ -1,0 +1,2246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Q Tracker</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;background:#f7f7f5;color:#1a1a1a;padding:2rem;}
+.wrap{max-width:940px;margin:0 auto;}
+h1{font-size:16px;font-weight:500;margin-bottom:1.25rem;}
+h1 span{font-size:12px;font-weight:400;color:#888;}
+.lbl{font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:#666;display:block;margin-bottom:4px;}
+.setup-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;margin-bottom:1.25rem;align-items:end;}
+input[type=text],input[type=date],select,textarea{font-family:inherit;font-size:12px;color:#1a1a1a;background:#fff;border:.5px solid #ccc;border-radius:6px;padding:6px 10px;width:100%;outline:none;}
+input[type=text],input[type=date],select{height:34px;}
+textarea{resize:vertical;padding:7px 10px;min-height:60px;}
+input:focus,select:focus,textarea:focus{border-color:#185FA5;}
+button{font-family:inherit;font-size:12px;cursor:pointer;border-radius:6px;padding:0 14px;border:.5px solid #ccc;background:#fff;color:#1a1a1a;height:34px;white-space:nowrap;}
+button:hover{background:#f0f0ee;}
+.btn-primary{background:#185FA5;color:#fff;border-color:#185FA5;}
+.btn-primary:hover{background:#0C447C;}
+.btn-sm{height:26px;font-size:11px;padding:0 10px;}
+
+/* Metrics */
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.25rem;}
+.mc{background:#efefed;border-radius:8px;padding:1rem;}
+.mc-label{font-size:11px;color:#666;margin-bottom:6px;}
+.mc-val{font-size:24px;font-weight:500;line-height:1;}
+.mc-sub{font-size:11px;color:#888;margin-top:5px;}
+.sdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle;}
+
+/* Bars */
+.bar-area{background:#fff;border:.5px solid #ddd;border-radius:10px;padding:.875rem 1rem;margin-bottom:1rem;}
+.bar-legend{display:flex;gap:14px;margin-bottom:10px;flex-wrap:wrap;}
+.bl-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#888;}
+.bl-dot{width:8px;height:8px;border-radius:2px;}
+.bars{display:flex;gap:3px;align-items:flex-end;height:52px;}
+.bw{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end;}
+.b{width:100%;border-radius:2px 2px 0 0;}
+.b-now{outline:2px solid #378ADD;outline-offset:1px;}
+.bwk{font-size:9px;color:#aaa;font-family:monospace;}
+
+/* Panels */
+.full-col{margin-bottom:1rem;}
+.panel{background:#fff;border:.5px solid #ddd;border-radius:10px;padding:.875rem 1rem;}
+.panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;padding-bottom:.5rem;border-bottom:.5px solid #eee;}
+.panel-title{font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:#888;font-weight:500;}
+.item-list{display:flex;flex-direction:column;gap:6px;min-height:36px;}
+.empty-msg{font-size:12px;color:#bbb;padding:4px 0;}
+
+/* Gate cards */
+.gate-card{background:#f7f7f5;border-radius:7px;padding:9px 10px;}
+.gate-card-top{display:flex;align-items:flex-start;gap:8px;}
+.gate-num{font-size:10px;font-weight:500;font-family:monospace;color:#0C447C;background:#E6F1FB;border-radius:3px;padding:2px 6px;flex-shrink:0;margin-top:1px;cursor:pointer;}
+.gate-card-label{flex:1;font-size:12px;font-weight:500;line-height:1.4;cursor:pointer;}
+.gate-num:hover,.gate-card-label:hover{text-decoration:underline;text-decoration-color:#aaa;text-underline-offset:2px;}
+.gate-card-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.gate-card-meta{margin-top:7px;padding-top:7px;border-top:.5px solid #e5e5e3;display:flex;flex-direction:column;gap:6px;}
+.gate-date-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.gate-meta-lbl{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#aaa;}
+.gate-meta-val{font-size:11px;color:#555;}
+.gate-intention{font-size:11px;color:#555;line-height:1.6;padding:2px 0 4px;border-bottom:.5px solid #eaeae8;margin-bottom:2px;display:flex;gap:6px;align-items:baseline;}
+.gate-intention .gate-meta-lbl{flex-shrink:0;}
+.date-overdue{color:#A32D2D;font-weight:500;}
+.date-soon{color:#854F0B;}
+.date-future{color:#555;}
+.lock-badge{font-size:10px;color:#0C447C;margin-left:3px;opacity:.7;}
+.slip-notice-card{font-size:10px;background:#FAEEDA;color:#633806;border-radius:3px;padding:2px 7px;}
+.gate-tag{font-size:10px;font-weight:500;font-family:monospace;color:#0C447C;background:#E6F1FB;border-radius:3px;padding:2px 6px;flex-shrink:0;}
+.kpi-table{width:100%;border-collapse:collapse;}
+.kpi-table th{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#aaa;font-weight:500;text-align:left;padding:2px 10px 4px 0;}
+.kpi-table td{font-size:11px;color:#555;padding:3px 10px 3px 0;}
+.kpi-table tr:not(:last-child) td{border-bottom:.5px solid #ececea;}
+
+/* Gate top risks */
+.gate-risks{display:flex;flex-direction:column;gap:4px;padding-top:6px;border-top:.5px solid #eaeae8;margin-top:2px;}
+.gate-risk-row{display:flex;align-items:baseline;gap:6px;font-size:11px;}
+.gate-risk-rank{font-size:10px;font-family:monospace;color:#bbb;flex-shrink:0;width:14px;}
+.gate-risk-label{flex:1;color:#1a1a1a;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.gate-risk-context{color:#aaa;font-size:10px;}
+.gate-risk-badges{display:flex;align-items:center;gap:5px;flex-shrink:0;}
+
+/* Gate status seg */
+.seg{display:flex;border:.5px solid #ccc;border-radius:5px;overflow:hidden;}
+.seg-btn{font-size:10px;font-weight:500;padding:3px 8px;border:none;border-right:.5px solid #ccc;background:#fff;color:#999;cursor:pointer;border-radius:0;height:auto;}
+.seg-btn:last-child{border-right:none;}
+.seg-btn:hover{background:#f0f0ee;}
+.seg-pending{background:#f0f0ee;color:#555;}
+.seg-active{background:#E6F1FB;color:#0C447C;}
+.seg-hit{background:#EAF3DE;color:#3B6D11;}
+.seg-missed{background:#FCEBEB;color:#A32D2D;}
+
+/* FMEA table display */
+.rpn-badge{font-size:10px;font-weight:500;font-family:monospace;padding:2px 7px;border-radius:3px;flex-shrink:0;}
+.rpn-low{background:#EAF3DE;color:#3B6D11;}
+.rpn-med{background:#FAEEDA;color:#633806;}
+.rpn-high{background:#FCEBEB;color:#A32D2D;}
+.fmea-card{background:#fff;border:.5px solid #ddd;border-radius:9px;overflow:hidden;}
+.fmea-problem-row{display:flex;align-items:flex-start;gap:8px;padding:9px 12px;background:#f0f0ee;border-bottom:1px solid #ddd;}
+.fmea-problem-text{flex:1;font-size:12px;font-weight:500;line-height:1.4;cursor:pointer;}
+.fmea-problem-text:hover{text-decoration:underline;text-decoration-color:#aaa;text-underline-offset:2px;}
+.fmea-top-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.fmea-table-wrap{overflow-x:auto;}
+.fmea-table{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed;}
+.fmea-table colgroup col.col-mode{width:16%;}
+.fmea-table colgroup col.col-effect{width:16%;}
+.fmea-table colgroup col.col-cause{width:auto;}
+.fmea-table colgroup col.col-sod{width:80px;}
+.fmea-table colgroup col.col-rpn{width:64px;}
+.fmea-table colgroup col.col-status{width:160px;}
+.fmea-table colgroup col.col-del{width:24px;}
+.fmea-table th{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#aaa;font-weight:500;text-align:left;padding:6px 8px 5px;border-bottom:.5px solid #eee;white-space:nowrap;}
+.fmea-table td{padding:7px 8px;vertical-align:top;border-bottom:.5px solid #f0f0ee;line-height:1.45;}
+.fmea-table tr:last-child td{border-bottom:none;}
+.fmea-table tr.mode-sep td{border-top:1px dashed #e0e0de;}
+.fmea-table tr.mode-sep:first-child td{border-top:none;}
+.cell-mode{font-weight:500;font-size:11px;color:#1a1a1a;border-left:3px solid #EF9F27;padding-left:9px;}
+.cell-mode-cont{border-left:3px solid #EF9F27;}
+.cell-effect{font-size:11px;color:#1a1a1a;border-left:2px solid #B5D4F4;padding-left:9px;}
+.cell-effect-cont{border-left:2px solid #B5D4F4;}
+.cell-cause{font-size:11px;color:#1a1a1a;}
+.cell-cause-mit{font-size:10px;color:#888;margin-top:2px;}
+.cell-sod{font-family:monospace;font-size:11px;color:#555;text-align:center;white-space:nowrap;}
+.cell-rpn{text-align:center;}
+.cell-del{text-align:right;}
+.cell-empty{color:#ccc;font-size:11px;}
+.css-seg{display:flex;border:.5px solid #ccc;border-radius:4px;overflow:hidden;}
+.css-btn{font-size:9px;font-weight:500;padding:2px 7px;border:none;border-right:.5px solid #ccc;background:#fff;color:#aaa;cursor:pointer;height:auto;}
+.css-btn:last-child{border-right:none;}
+.css-btn:hover{background:#f0f0ee;}
+.css-open{background:#f0f0ee;color:#555;}
+.css-mitigating{background:#E6F1FB;color:#0C447C;}
+.css-resolved{background:#EAF3DE;color:#3B6D11;}
+.del-btn{background:none;border:none;cursor:pointer;color:#ccc;font-size:14px;line-height:1;padding:0 2px;flex-shrink:0;height:auto;}
+.del-btn:hover{color:#E24B4A;}
+
+/* Lock / slip */
+.lock-btn{height:34px;padding:0 10px;font-size:11px;display:flex;align-items:center;gap:5px;flex-shrink:0;}
+.lock-btn.is-locked{background:#E6F1FB;color:#0C447C;border-color:#185FA5;}
+.date-input-row{display:flex;gap:6px;}
+.date-input-row input{flex:1;}
+.locked-date-note{font-size:11px;color:#888;margin-top:3px;}
+.slip-notice{font-size:11px;background:#FAEEDA;color:#633806;border-radius:4px;padding:5px 8px;margin-top:3px;}
+
+/* Toolbar */
+.toolbar{display:flex;justify-content:flex-end;gap:8px;padding-top:.5rem;border-top:.5px solid #ddd;}
+.btn-save{background:#185FA5;color:#fff;border-color:#185FA5;}
+.btn-save:hover{background:#0C447C;}
+.btn-clear{color:#888;}
+.btn-gantt{color:#0C447C;border-color:#B5D4F4;}
+
+/* Modals */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:100;align-items:flex-start;justify-content:center;padding:2rem 1rem;overflow-y:auto;}
+.overlay.open{display:flex;}
+.modal{background:#fff;border-radius:12px;padding:1.5rem;width:100%;max-width:600px;display:flex;flex-direction:column;gap:14px;box-shadow:0 8px 32px rgba(0,0,0,.14);margin:auto;}
+.modal-sm{max-width:420px;}
+.modal-title{font-size:14px;font-weight:500;}
+.modal-field{display:flex;flex-direction:column;gap:5px;}
+.modal-2col{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;padding-top:6px;border-top:.5px solid #eee;flex-wrap:wrap;}
+.modal-actions button{height:34px;}
+.modal-section-lbl{font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:#888;font-weight:500;}
+.modal-empty{font-size:11px;color:#bbb;padding:4px 0;}
+
+/* FMEA modal inline hierarchy */
+.modal-modes-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.modal-modes-list{display:flex;flex-direction:column;gap:12px;}
+.modal-mode-block{border:.5px solid #f0c070;border-radius:8px;overflow:hidden;}
+.modal-mode-head{display:flex;align-items:center;gap:8px;padding:7px 10px;background:#FEF3DC;border-bottom:.5px solid #f0c070;}
+.modal-mode-head-lbl{font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:#854F0B;font-weight:500;flex:1;}
+.modal-mode-body{padding:10px;display:flex;flex-direction:column;gap:10px;background:#fff;}
+.modal-mode-body textarea{min-height:44px;font-size:12px;}
+.modal-effects-header{display:flex;align-items:center;justify-content:space-between;}
+.modal-effects-list{display:flex;flex-direction:column;gap:8px;margin-top:6px;}
+.modal-effect-block{border:.5px solid #c8d8ee;border-radius:7px;overflow:hidden;}
+.modal-effect-head{display:flex;align-items:center;gap:8px;padding:6px 10px;background:#EBF4FF;border-bottom:.5px solid #c8d8ee;}
+.modal-effect-head-lbl{font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:#185FA5;font-weight:500;flex:1;}
+.modal-effect-body{padding:9px 10px;display:flex;flex-direction:column;gap:9px;background:#fff;}
+.modal-effect-body textarea{min-height:40px;font-size:12px;}
+.modal-causes-header{display:flex;align-items:center;justify-content:space-between;}
+.modal-causes-list{display:flex;flex-direction:column;gap:6px;margin-top:6px;}
+.modal-cause-block{background:#f7f7f5;border:.5px solid #e5e5e3;border-radius:6px;padding:8px 10px;display:flex;flex-direction:column;gap:7px;}
+.modal-cause-head{display:flex;align-items:center;gap:6px;}
+.modal-cause-num{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#aaa;flex:1;}
+.modal-cause-block textarea{min-height:38px;font-size:12px;background:#fff;}
+.cause-sod-grid{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end;}
+.sod-field{display:flex;flex-direction:column;gap:4px;}
+.sod-field .lbl{margin-bottom:0;}
+.sod-field select{font-size:11px;height:30px;}
+.rpn-cell{display:flex;flex-direction:column;align-items:center;gap:4px;padding-bottom:1px;}
+.rpn-cell-lbl{font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:.05em;}
+
+/* KPI modal */
+.kpi-list-in-modal{display:flex;flex-direction:column;gap:4px;margin-top:4px;}
+.kpi-modal-row{display:grid;grid-template-columns:2fr 1.2fr 1fr auto;gap:6px;align-items:center;background:#f7f7f5;border-radius:5px;padding:4px 8px;font-size:11px;}
+.kpi-col-heads{display:grid;grid-template-columns:2fr 1.2fr 1fr auto;gap:6px;padding:0 8px;}
+.kpi-col-head{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#aaa;}
+
+/* Resolved FMEA levels */
+.fmea-card.problem-resolved .fmea-problem-text { text-decoration:line-through; color:#aaa; }
+.fmea-card.problem-resolved .fmea-table-wrap { opacity:.45; pointer-events:none; }
+.level-seg { display:inline-flex; border:.5px solid #ccc; border-radius:4px; overflow:hidden; margin-top:4px; }
+.level-seg-btn { font-size:8px; font-weight:500; padding:2px 5px; border:none; border-right:.5px solid #ccc; background:#fff; color:#aaa; cursor:pointer; height:auto; white-space:nowrap; letter-spacing:0; }
+.level-seg-btn:last-child { border-right:none; }
+.level-seg-btn:hover { background:#f0f0ee; }
+.level-seg-btn.lsb-open       { background:#f0f0ee; color:#555; }
+.level-seg-btn.lsb-mitigating { background:#E6F1FB; color:#0C447C; }
+.level-seg-btn.lsb-resolved   { background:#EAF3DE; color:#3B6D11; }
+/* Problem-header seg is slightly larger */
+.prob-seg { display:inline-flex; border:.5px solid #ccc; border-radius:4px; overflow:hidden; }
+.prob-seg-btn { font-size:10px; font-weight:500; padding:3px 10px; border:none; border-right:.5px solid #ccc; background:#fff; color:#aaa; cursor:pointer; height:auto; white-space:nowrap; }
+.prob-seg-btn:last-child { border-right:none; }
+.prob-seg-btn:hover { background:#f0f0ee; }
+.prob-seg-btn.lsb-open       { background:#f0f0ee; color:#555; }
+.prob-seg-btn.lsb-mitigating { background:#E6F1FB; color:#0C447C; }
+.prob-seg-btn.lsb-resolved   { background:#EAF3DE; color:#3B6D11; }
+tr.mode-resolved .cell-mode { color:#bbb; text-decoration:line-through; }
+tr.mode-resolved td:not(.cell-mode) { opacity:.4; pointer-events:none; }
+tr.effect-resolved .cell-effect { color:#bbb; text-decoration:line-through; }
+tr.effect-resolved td:not(.cell-mode):not(.cell-effect) { opacity:.4; pointer-events:none; }
+body.readonly .panel-header button,
+body.readonly .btn-gantt,
+body.readonly .btn-clear,
+body.readonly .btn-save,
+body.readonly .del-btn,
+body.readonly .setup-row input,
+body.readonly .setup-row select { pointer-events:none; opacity:.4; }
+body.readonly .toolbar { display:none; }
+/* Gate dependencies */
+.gate-deps { display:flex; flex-direction:column; gap:4px; padding-top:6px; border-top:.5px solid #eaeae8; margin-top:2px; }
+.gate-dep-row { display:flex; align-items:center; gap:6px; font-size:11px; }
+.gate-dep-name { flex:1; color:#1a1a1a; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dep-status-badge { font-size:10px; font-weight:500; font-family:monospace; padding:2px 7px; border-radius:3px; flex-shrink:0; white-space:nowrap; }
+.dep-type-badge { font-size:9px; font-weight:600; padding:1px 5px; border-radius:3px; flex-shrink:0; }
+.dep-passed  { background:#EAF3DE; color:#3B6D11; }
+.dep-overdue { background:#FCEBEB; color:#A32D2D; }
+.dep-active  { background:#E6F1FB; color:#0C447C; }
+.dep-pending { background:#f0f0ee; color:#555; }
+.dtype-blocking    { background:#FCEBEB; color:#A32D2D; }
+.dtype-synergistic { background:#EAF3DE; color:#3B6D11; }
+/* Dep picker */
+.dep-picker-list { display:flex; flex-direction:column; gap:4px; max-height:260px; overflow-y:auto; margin-top:6px; }
+.dep-picker-row { display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:6px; background:#f7f7f5; cursor:pointer; font-size:11px; }
+.dep-picker-row:hover { background:#EBF4FF; }
+.dep-picker-name { flex:1; font-weight:500; color:#1a1a1a; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dep-picker-meta { font-size:10px; color:#888; flex-shrink:0; }
+.dep-type-seg { display:flex; border:.5px solid #ccc; border-radius:4px; overflow:hidden; }
+.dep-type-btn { font-size:10px; font-weight:500; padding:3px 10px; border:none; border-right:.5px solid #ccc; background:#fff; color:#999; cursor:pointer; height:auto; }
+.dep-type-btn:last-child { border-right:none; }
+.dep-type-btn:hover { background:#f0f0ee; }
+.dep-type-btn.dtb-blocking    { background:#FCEBEB; color:#A32D2D; }
+.dep-type-btn.dtb-synergistic { background:#EAF3DE; color:#3B6D11; }
+.draft-dep-row { display:flex; align-items:center; gap:8px; background:#f7f7f5; border-radius:5px; padding:5px 8px; font-size:11px; }
+.draft-dep-name { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#1a1a1a; }
+/* Sync indicator */
+.sync-dot.show { opacity:1; }
+.sync-dot.syncing { background:#f0f0ee; color:#666; }
+.sync-dot.synced  { background:#EAF3DE; color:#3B6D11; }
+.sync-dot.error   { background:#FCEBEB; color:#A32D2D; }
+.gs-status{font-size:11px;border-radius:5px;padding:7px 10px;display:none;}
+.gs-status.show{display:block;}
+.gs-status.loading{background:#f0f0ee;color:#555;}
+.gs-status.success{background:#EAF3DE;color:#3B6D11;}
+.gs-status.error{background:#FCEBEB;color:#A32D2D;}
+.gs-status.info{background:#E6F1FB;color:#0C447C;}
+.gs-gate-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:.5px solid #f0f0ee;}
+.gs-gate-row:last-child{border-bottom:none;}
+.gs-linked{font-size:10px;color:#3B6D11;flex-shrink:0;}
+.gs-unlinked{font-size:10px;color:#aaa;flex-shrink:0;}
+
+@media print{
+  body{background:#fff;padding:1rem;}
+  .toolbar,.overlay,.panel-header button,.del-btn{display:none !important;}
+  .css-seg{pointer-events:none;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Quarter tracker <span id="proj-display"></span></h1>
+<div class="setup-row">
+  <div><span class="lbl">Project</span><input type="text" id="proj" placeholder="Project name" oninput="save();updateTitle()"></div>
+  <div><span class="lbl">Quarter</span><input type="text" id="qtr" placeholder="e.g. Q2 2026" oninput="save();updateTitle()"></div>
+  <div><span class="lbl">Quarter start date</span><input type="date" id="qstart" onchange="save();render()"></div>
+  <div><span class="lbl">Current week</span>
+    <div id="wk-display" style="height:34px;display:flex;align-items:center;font-size:14px;font-weight:600;color:#185FA5;">W&#8212;</div>
+  </div>
+</div>
+<div class="metrics">
+  <div class="mc"><div class="mc-label">Stage-gate pass rate</div><div class="mc-val" id="m-rate">&#8212;</div><div class="mc-sub" id="m-sub">No gates due yet</div></div>
+  <div class="mc"><div class="mc-label">Open high-risk items</div><div class="mc-val" id="r-rate">&#8212;</div><div class="mc-sub" id="r-sub">No FMEA items added</div></div>
+  <div class="mc"><div class="mc-label">Overall signal</div><div class="mc-val" id="sig" style="font-size:14px;padding-top:5px;">&#8212;</div><div class="mc-sub" id="sig-sub">Add data to generate signal</div></div>
+</div>
+<div class="bar-area">
+  <div class="bar-legend">
+    <div class="bl-item"><div class="bl-dot" style="background:#639922;"></div>Pass rate &ge;70%</div>
+    <div class="bl-item"><div class="bl-dot" style="background:#BA7517;"></div>50&ndash;69%</div>
+    <div class="bl-item"><div class="bl-dot" style="background:#E24B4A;"></div>&lt;50%</div>
+    <div class="bl-item"><div class="bl-dot" style="background:#ddd;"></div>No data / future</div>
+  </div>
+  <div class="bars" id="bars"></div>
+</div>
+<div class="full-col">
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Stage-gates</span>
+      <button class="btn-primary btn-sm" onclick="openGateModal()">+ Add gate</button>
+    </div>
+    <div class="item-list" id="ms-list"></div>
+  </div>
+</div>
+<div class="full-col">
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title" onclick="toggleFmeaPanel()" style="cursor:pointer;user-select:none;">
+        <span id="fmea-chevron" style="font-size:9px;margin-right:4px;display:inline-block;transform:rotate(-90deg);transition:transform .2s;">&#9660;</span>FMEA &mdash; Risk register
+      </span>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <button class="btn-primary btn-sm" onclick="openFmeaModal()">+ Add problem</button>
+      </div>
+    </div>
+    <div class="item-list" id="rk-list" style="display:none;margin-top:2px;"></div>
+  </div>
+</div>
+<div class="toolbar">
+  <span id="sync-dot" class="sync-dot"></span>
+  <button class="btn-clear" onclick="clearAll()">Clear all</button>
+  <button class="btn-gantt" onclick="openGanttSyncModal()">&#8635; Gantt sync</button>
+  <button class="btn-save" onclick="exportHtml()">Download snapshot</button>
+</div>
+</div>
+
+<!-- Gate modal -->
+<div class="overlay" id="gate-overlay" onclick="if(event.target===this)closeGateModal()">
+  <div class="modal">
+    <div class="modal-title" id="gate-modal-title">Add stage-gate</div>
+    <div class="modal-field"><span class="lbl">Description</span><input type="text" id="g-desc" placeholder="Stage-gate name or description"></div>
+    <div class="modal-field"><span class="lbl">Intention</span><textarea id="g-intention" rows="3" placeholder="What question does this gate answer? What must be true to advance?"></textarea></div>
+    <div class="modal-field">
+      <span class="lbl">Due date</span>
+      <div class="date-input-row">
+        <input type="date" id="g-date">
+        <button class="lock-btn" id="g-lock-btn" onclick="toggleDateLock()"><span id="g-lock-icon">&#128275;</span><span id="g-lock-label">Lock date</span></button>
+      </div>
+      <div id="g-lock-note" class="locked-date-note" style="display:none;"></div>
+      <div id="g-slip-notice" class="slip-notice" style="display:none;"></div>
+    </div>
+    <div class="modal-field" id="g-completed-row" style="display:none;">
+      <span class="lbl">Completion date</span>
+      <input type="date" id="g-completed-date">
+    </div>
+    <div class="modal-field">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <span class="lbl" style="margin:0;">KPI targets</span>
+        <button class="btn-sm" onclick="openKpiModal()">+ Add target</button>
+      </div>
+      <div class="kpi-col-heads"><span class="kpi-col-head">KPI</span><span class="kpi-col-head">Target</span><span class="kpi-col-head">Unit</span><span></span></div>
+      <div id="gate-kpi-list" class="kpi-list-in-modal"></div>
+    </div>
+    <div class="modal-field">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <span class="lbl" style="margin:0;">Dependencies</span>
+        <button class="btn-sm" onclick="openDepPickerModal()">+ Add dependency</button>
+      </div>
+      <div id="gate-dep-list"></div>
+    </div>
+    <div class="modal-actions"><button onclick="closeGateModal()">Cancel</button><button class="btn-primary" id="gate-save-btn" onclick="saveGate()">Save gate</button></div>
+  </div>
+</div>
+
+<!-- Dependency picker modal -->
+<div class="overlay" id="dep-picker-overlay" style="z-index:300;" onclick="if(event.target===this)closeDepPickerModal()">
+  <div class="modal modal-sm" style="max-width:500px;">
+    <div class="modal-title">Add dependency</div>
+    <div class="modal-field"><span class="lbl">Dependency type</span>
+      <div class="dep-type-seg" id="dep-type-seg">
+        <button class="dep-type-btn dtb-blocking" id="dtt-blocking" onclick="setDepType('blocking')">Blocking (F&#8594;S)</button>
+        <button class="dep-type-btn" id="dtt-synergistic" onclick="setDepType('synergistic')">Synergistic (F&#8594;F)</button>
+      </div>
+    </div>
+    <div class="modal-field" style="display:flex;gap:8px;">
+      <input type="text" id="dep-search" placeholder="Search Gantt projects&#8230;" oninput="renderDepPickerList()" style="flex:1;">
+      <select id="dep-div-filter" onchange="renderDepPickerList()" style="flex:0 0 auto;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;">
+        <option value="">All divisions</option>
+        <option value="fuelcell">Fuel Cell</option>
+        <option value="electrolyzer">Electrolyzer</option>
+        <option value="exploration">Exploration</option>
+      </select>
+      <select id="dep-type-filter" onchange="renderDepPickerList()" style="flex:0 0 auto;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;">
+        <option value="">All types</option>
+        <option value="objective">Objective</option>
+        <option value="initiative">Initiative</option>
+        <option value="task">Project</option>
+        <option value="milestone">Milestone</option>
+        <option value="delivery">Delivery</option>
+        <option value="stagegate">Stage-Gate</option>
+      </select>
+    </div>
+    <div id="dep-picker-list" class="dep-picker-list"><div class="modal-empty">Loading&#8230;</div></div>
+    <div class="modal-actions"><button onclick="closeDepPickerModal()">Cancel</button></div>
+  </div>
+</div>
+
+<!-- KPI modal -->
+<div class="overlay" id="kpi-overlay" style="z-index:200;" onclick="if(event.target===this)closeKpiModal()">
+  <div class="modal modal-sm">
+    <div class="modal-title">Add KPI target</div>
+    <div class="modal-field"><span class="lbl">KPI</span><input type="text" id="k-name" placeholder="e.g. Power density"></div>
+    <div class="modal-field"><span class="lbl">Target</span><input type="text" id="k-target" placeholder="e.g. &ge; 1.0"></div>
+    <div class="modal-field"><span class="lbl">Unit</span><input type="text" id="k-unit" placeholder="e.g. W/cm&sup2;"></div>
+    <div class="modal-actions"><button onclick="closeKpiModal()">Cancel</button><button class="btn-primary" onclick="saveKpi()">Save target</button></div>
+  </div>
+</div>
+
+<!-- FMEA modal -->
+<div class="overlay" id="fmea-overlay" onclick="if(event.target===this)closeFmeaModal()">
+  <div class="modal" style="max-width:660px;">
+    <div class="modal-title" id="fmea-modal-title">Add problem</div>
+    <div class="modal-field"><span class="lbl">Problem to be solved</span><textarea id="f-problem" rows="2" placeholder="What is the engineering problem or failure risk being addressed?"></textarea></div>
+    <div class="modal-field"><span class="lbl">Stage-gate</span><select id="f-gate"><option value="">&#8212; No gate association &#8212;</option></select></div>
+    <div>
+      <div class="modal-modes-header">
+        <span class="modal-section-lbl">Failure modes</span>
+        <button class="btn-sm btn-primary" onclick="addDraftMode()">+ Add failure mode</button>
+      </div>
+      <div id="fmea-modes-section" class="modal-modes-list"></div>
+    </div>
+    <div class="modal-actions">
+      <button onclick="closeFmeaModal()">Cancel</button>
+      <button class="btn-primary" id="fmea-save-btn" onclick="saveFmea()">Save problem</button>
+    </div>
+  </div>
+</div>
+
+<!-- Gantt sync modal -->
+<div class="overlay" id="gantt-overlay" onclick="if(event.target===this)closeGanttSyncModal()">
+  <div class="modal" style="max-width:520px;max-height:calc(100vh - 5rem);overflow-y:auto;">
+    <div class="modal-title">Gantt sync</div>
+    <div class="modal-2col">
+      <div class="modal-field"><span class="lbl">Gantt bin ID</span><input type="text" id="gs-binid" placeholder="64f2a1c3..." autocomplete="off"></div>
+      <div class="modal-field"><span class="lbl">API key</span><input type="password" id="gs-apikey" placeholder="$2a$10$..." autocomplete="off"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 90px 80px;gap:10px;">
+      <div class="modal-field"><span class="lbl">Division</span>
+        <select id="gs-division">
+          <option value="fuelcell">Fuel Cell</option>
+          <option value="electrolyzer">Electrolyzer</option>
+          <option value="exploration">Exploration</option>
+        </select>
+      </div>
+      <div class="modal-field"><span class="lbl">Year</span><input type="text" id="gs-year" placeholder="2026" style="text-align:center;"></div>
+      <div class="modal-field"><span class="lbl">Quarter</span>
+        <select id="gs-quarter">
+          <option value="1">Q1</option><option value="2">Q2</option>
+          <option value="3">Q3</option><option value="4">Q4</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="loadGanttObjectives()" style="width:100%;">Load objectives</button>
+    <div class="modal-field">
+      <span class="lbl">Project (Objective) <span style="font-weight:400;font-size:9px;text-transform:none;letter-spacing:0;">&mdash; stage-gates sync under this project</span></span>
+      <select id="gs-parentid" onchange="onObjectiveSelect()"><option value="">&#8212; Load objectives first &#8212;</option></select>
+    </div>
+    <div id="gs-status" class="gs-status"></div>
+    <div>
+      <span class="lbl" style="margin-bottom:6px;display:block;">Gates</span>
+      <div id="gs-gate-list" style="max-height:180px;overflow-y:auto;"></div>
+    </div>
+    <div class="modal-actions">
+      <button onclick="closeGanttSyncModal()">Close</button>
+      <button onclick="pullFromGantt()" title="Create / update tracker gates from Gantt stage-gates">&#8592; Pull from Gantt</button>
+      <button class="btn-primary" onclick="pushToGantt()" title="Push tracker gates to Gantt as stage-gate sub-projects">Push to Gantt &#8594;</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ================================================================
+//  GANTT SYNC — paste credentials from your Gantt HTML file here
+// ================================================================
+var GANTT_BIN_ID  = '';  // e.g. '64f2a1c3a0e3560baf9ab12e'
+var GANTT_API_KEY = '';  // e.g. '$2a$10$abc...'
+// ================================================================
+
+// ================================================================
+//  CONFLUENCE EMBED — host on GitHub Pages, iframe in Confluence
+// ================================================================
+//  1. Go to github.com → new public repo → upload this file as
+//     index.html → Settings → Pages → Deploy from main branch
+//  2. Your URL: https://YOUR-USERNAME.github.io/REPO-NAME/
+//  3. In Confluence: Insert → iframe macro (or HTML macro):
+//       <iframe src="https://YOUR-USERNAME.github.io/q-tracker/
+//               ?parentId=101&division=electrolyzer
+//               &year=2026&quarter=2"
+//               width="100%" height="900" frameborder="0">
+//       </iframe>
+//  4. URL parameters:
+//       name=<project-name>  Gantt objective name (easiest — no ID lookup needed)
+//       parentId=<id>        Gantt objective numeric ID (alternative to name=)
+//       division=<value>     fuelcell | electrolyzer | exploration
+//       year=<yyyy>          e.g. 2026
+//       quarter=<1-4>        e.g. 2
+//       readonly=1           view-only mode
+//       poll=<seconds>       auto-refresh interval (default 30)
+// ================================================================
+
+var IS_READONLY = new URLSearchParams(window.location.search).has('readonly');
+if(IS_READONLY) document.body.classList.add('readonly');
+
+var milestones = [];
+var risks = [];
+var deletedGanttIds = []; /* tombstone: Gantt project IDs deleted from either side */
+var draftKpis = [];
+var draftDeps = [];   /* [{ganttProjectId, name, division, type}] */
+var draftRisk = null;
+var ganttCache = null; /* last-fetched Gantt projects array */
+var editingGateIdx = null;
+var editingRiskIdx = null;
+var draftLocked = false;
+var draftLockedDate = null;
+var draftUnlockPending = false;
+var GANTT_SETTINGS_KEY = 'qtracker-gantt';
+function getGanttSettingsKey(){
+  /* Namespace by URL params so different embedded pages never share settings */
+  var params = new URLSearchParams(window.location.search);
+  var name = params.get('name') || params.get('parentId');
+  return name ? 'qtracker-gantt-'+name : GANTT_SETTINGS_KEY;
+}
+var _sessionSettings = null; /* set by URL params — overrides localStorage for this tab */
+var _lastKnownVersion = 0;   /* tracks last JSONbin _version seen — used by silent poll */
+
+/* ── Date utilities ─────────────────────────────────────────────────────── */
+function addOneDay(dateStr){
+  if(!dateStr) return dateStr;
+  var d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + 1);
+  return d.toISOString().slice(0,10);
+}
+
+/* Compute the start date for a stage-gate Gantt sub-project.
+   prevGateDate : due date of the immediately preceding gate ('' if none).
+   parentId     : Gantt objective ID used to look up objective start as fallback. */
+function computeGateStart(gate, prevGateDate, parentId){
+  var latestDepEnd = prevGateDate || '';
+  if(gate.dependencies && gate.dependencies.length && ganttCache){
+    for(var di=0; di<gate.dependencies.length; di++){
+      var depId = parseInt(gate.dependencies[di].ganttProjectId, 10);
+      for(var ci=0; ci<ganttCache.length; ci++){
+        if(parseInt(ganttCache[ci].id, 10) === depId){
+          var depEnd = ganttCache[ci].end || '';
+          if(depEnd && depEnd > latestDepEnd) latestDepEnd = depEnd;
+          break;
+        }
+      }
+    }
+  }
+  if(latestDepEnd) return addOneDay(latestDepEnd);
+  var objStart = '';
+  if(ganttCache && parentId){
+    for(var oi=0; oi<ganttCache.length; oi++){
+      if(parseInt(ganttCache[oi].id, 10) === parseInt(parentId, 10)){
+        objStart = ganttCache[oi].start || ''; break;
+      }
+    }
+  }
+  return objStart || gate.date;
+}
+
+function genId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function getCurWeek(){
+  var qs = document.getElementById('qstart').value;
+  if(!qs) return 1;
+  var days = Math.floor((new Date().setHours(0,0,0,0) - new Date(qs+'T00:00:00').getTime()) / 86400000);
+  return Math.max(1, Math.min(13, Math.floor(days/7) + 1));
+}
+function updateWeekDisplay(){
+  var el = document.getElementById('wk-display');
+  if(!el) return;
+  var qs = document.getElementById('qstart').value;
+  el.textContent = qs ? 'W'+getCurWeek() : 'W\u2014';
+}
+
+function dateToWeek(d){
+  var qs = document.getElementById('qstart').value;
+  if(!qs || !d) return null;
+  return Math.max(1, Math.min(13, Math.ceil((new Date(d) - new Date(qs)) / (1000*60*60*24*7)) + 1));
+}
+function formatDate(d){
+  if(!d) return '&#8212;';
+  return new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+function dateStatusClass(d, status){
+  if(!d || status !== 'pending') return 'date-future';
+  var diff = Math.round((new Date(d+'T00:00:00') - new Date().setHours(0,0,0,0)) / (1000*60*60*24));
+  return diff < 0 ? 'date-overdue' : diff <= 7 ? 'date-soon' : 'date-future';
+}
+function calcRpn(s,o,d){ return (parseInt(s)||1) * (parseInt(o)||1) * (parseInt(d)||1); }
+function rpnClass(r){ return r >= 200 ? 'rpn-high' : r >= 100 ? 'rpn-med' : 'rpn-low'; }
+
+function getStorageKey(){
+  /* When loaded via URL params, scope storage to this project so
+     multiple embedded pages don't overwrite each other's data */
+  var params = new URLSearchParams(window.location.search);
+  var name = params.get('name') || params.get('parentId');
+  return name ? 'qtracker-'+name : 'qtracker';
+}
+function worstRpn(prob){
+  var max = 0;
+  (prob.modes||[]).forEach(function(m){ (m.effects||[]).forEach(function(e){ (e.causes||[]).forEach(function(c){ var r = calcRpn(c.severity,c.occurrence,c.detection); if(r>max) max=r; }); }); });
+  return max;
+}
+function gateIsPassed(gateId){
+  if(!gateId) return false;
+  for(var i=0; i<milestones.length; i++){ if(milestones[i].gid===gateId) return milestones[i].status==='hit'; }
+  return false;
+}
+function worstUnresolvedRpn(prob){
+  if(gateIsPassed(prob.gateId)) return 0;
+  if(prob.status==='resolved') return 0;
+  var max = 0;
+  (prob.modes||[]).forEach(function(m){
+    if(m.status==='resolved') return;
+    (m.effects||[]).forEach(function(e){
+      if(e.status==='resolved') return;
+      (e.causes||[]).forEach(function(c){ if(c.status!=='resolved'){ var r=calcRpn(c.severity,c.occurrence,c.detection); if(r>max) max=r; } });
+    });
+  });
+  return max;
+}
+
+function sortedGates(){
+  return milestones.map(function(m,i){ return {m:m, i:i}; }).sort(function(a,b){
+    if(!a.m.date && !b.m.date) return 0;
+    if(!a.m.date) return 1; if(!b.m.date) return -1;
+    return a.m.date < b.m.date ? -1 : a.m.date > b.m.date ? 1 : 0;
+  });
+}
+function gateNumForGid(gid){
+  var s = sortedGates();
+  for(var i=0; i<s.length; i++){ if(s[i].m.gid === gid) return i+1; }
+  return null;
+}
+
+function migrateRisk(r){
+  if(r.modes) return r;
+  if(r.effects){
+    return { pid:genId(), problem:r.mode||r.problem||'', gateId:r.gateId||null,
+      modes:[{mid:genId(), mode:r.mode||'', effects:r.effects}] };
+  }
+  var cause = {cid:genId(), cause:r.cause||'', severity:r.severity||1, occurrence:r.occurrence||1,
+    detection:r.detection||1, mitigation:r.mitigation||'', status:r.status||'open'};
+  return { pid:genId(), problem:r.mode||r.label||'', gateId:r.gateId||null,
+    modes:[{mid:genId(), mode:r.mode||r.label||'', effects:r.effect?[{eid:genId(),effect:r.effect,causes:[cause]}]:[]}] };
+}
+
+/* Persistence */
+function save(){
+  try {
+    localStorage.setItem(getStorageKey(), JSON.stringify({
+      proj: document.getElementById('proj').value,
+      qtr:  document.getElementById('qtr').value,
+      qstart: document.getElementById('qstart').value,
+      milestones: milestones,
+      risks: risks,
+      deletedGanttIds: deletedGanttIds
+    }));
+  } catch(e){}
+}
+function loadSaved(){
+  try {
+    var raw = localStorage.getItem(getStorageKey());
+    if(!raw) return;
+    var d = JSON.parse(raw);
+    document.getElementById('proj').value   = d.proj   || '';
+    document.getElementById('qtr').value    = d.qtr    || '';
+    document.getElementById('qstart').value = d.qstart || '';
+    milestones = d.milestones || [];
+    milestones.forEach(function(m,i){ if(!m.gid) m.gid = 'legacy-'+i; });
+    risks = (d.risks || []).map(migrateRisk);
+    deletedGanttIds = d.deletedGanttIds || [];
+    updateTitle();
+  } catch(e){}
+}
+function updateTitle(){
+  var parts = [document.getElementById('proj').value, document.getElementById('qtr').value].filter(Boolean);
+  document.getElementById('proj-display').textContent = parts.length ? '&#8212; ' + parts.join(', ') : '';
+}
+
+/* Gate modal */
+function openGateModal(){
+  editingGateIdx = null; draftKpis = []; draftDeps = []; draftLocked = false; draftLockedDate = null; draftUnlockPending = false;
+  document.getElementById('g-desc').value = '';
+  document.getElementById('g-date').value = '';
+  document.getElementById('g-intention').value = '';
+  document.getElementById('g-completed-date').value = '';
+  document.getElementById('g-completed-row').style.display = 'none';
+  document.getElementById('gate-modal-title').textContent = 'Add stage-gate';
+  document.getElementById('gate-save-btn').textContent = 'Save gate';
+  renderDraftKpis(); renderDraftDeps(); updateLockUI();
+  document.getElementById('gate-overlay').classList.add('open');
+  setTimeout(function(){ document.getElementById('g-desc').focus(); }, 50);
+}
+function openEditGateModal(i){
+  var m = milestones[i]; editingGateIdx = i;
+  draftKpis = (m.kpis||[]).map(function(k){ return {name:k.name, target:k.target, unit:k.unit}; });
+  draftDeps = (m.dependencies||[]).map(function(d){ return {ganttProjectId:d.ganttProjectId, name:d.name, division:d.division, type:d.type||'blocking'}; });
+  draftLocked = !!m.locked; draftLockedDate = m.lockedDate||null; draftUnlockPending = false;
+  document.getElementById('g-desc').value = m.label || '';
+  document.getElementById('g-date').value = m.date  || '';
+  document.getElementById('g-intention').value = m.intention || '';
+  var isHit = m.status === 'hit';
+  document.getElementById('g-completed-row').style.display = isHit ? '' : 'none';
+  document.getElementById('g-completed-date').value = m.completedDate || '';
+  document.getElementById('gate-modal-title').textContent = 'Edit stage-gate';
+  document.getElementById('gate-save-btn').textContent = 'Save changes';
+  renderDraftKpis(); renderDraftDeps(); updateLockUI();
+  document.getElementById('gate-overlay').classList.add('open');
+  setTimeout(function(){ document.getElementById('g-desc').focus(); }, 50);
+}
+function closeGateModal(){ document.getElementById('gate-overlay').classList.remove('open'); }
+
+function toggleDateLock(){
+  var cur = document.getElementById('g-date').value;
+  if(draftLocked){
+    if(draftUnlockPending){ draftLocked=false; draftLockedDate=null; draftUnlockPending=false; }
+    else draftUnlockPending = true;
+  } else {
+    if(!cur) return;
+    draftLocked=true; draftLockedDate=cur; draftUnlockPending=false;
+  }
+  updateLockUI();
+}
+function updateLockUI(){
+  var btn  = document.getElementById('g-lock-btn');
+  var icon = document.getElementById('g-lock-icon');
+  var lbl  = document.getElementById('g-lock-label');
+  var note = document.getElementById('g-lock-note');
+  var slip = document.getElementById('g-slip-notice');
+  var cur  = document.getElementById('g-date').value;
+  if(draftLocked){
+    btn.classList.add('is-locked');
+    icon.innerHTML = draftUnlockPending ? '&#128275;' : '&#128274;';
+    lbl.textContent = draftUnlockPending ? 'Click again to unlock' : 'Locked';
+    if(draftUnlockPending){ btn.style.background='#FCEBEB'; btn.style.color='#A32D2D'; btn.style.borderColor='#A32D2D'; }
+    else { btn.style.background=''; btn.style.color=''; btn.style.borderColor=''; }
+    note.style.display = 'block';
+    note.textContent = 'Committed baseline: ' + formatDate(draftLockedDate).replace('&#8212;','—');
+    var isSlip = cur && draftLockedDate && cur !== draftLockedDate;
+    if(isSlip){ slip.style.display='block'; slip.textContent = '\u26a0 Date ' + (cur > draftLockedDate ? 'pushed out' : 'pulled in') + ' from committed baseline.'; }
+    else slip.style.display = 'none';
+  } else {
+    btn.classList.remove('is-locked');
+    btn.style.background=''; btn.style.color=''; btn.style.borderColor='';
+    icon.innerHTML = '&#128275;';
+    lbl.textContent = cur ? 'Lock date' : 'Set date to lock';
+    note.style.display = 'none'; slip.style.display = 'none'; draftUnlockPending = false;
+  }
+}
+function saveGate(){
+  var desc = document.getElementById('g-desc').value.trim();
+  if(!desc){ document.getElementById('g-desc').focus(); return; }
+  var newDate   = document.getElementById('g-date').value;
+  var intention = document.getElementById('g-intention').value.trim();
+  var isSlip    = draftLocked && draftLockedDate && newDate && newDate !== draftLockedDate;
+  if(editingGateIdx !== null){
+    var m = milestones[editingGateIdx];
+    var completedDate = m.status==='hit' ? (document.getElementById('g-completed-date').value || m.completedDate || null) : (m.completedDate || null);
+    m.label=desc; m.date=newDate; m.intention=intention; m.kpis=draftKpis.slice(); m.dependencies=draftDeps.slice();
+    m.locked=draftLocked; m.lockedDate=draftLocked?draftLockedDate:null; m.slipped=isSlip;
+    m.completedDate = completedDate;
+  } else {
+    milestones.push({ gid:genId(), label:desc, date:newDate, intention:intention,
+      kpis:draftKpis.slice(), dependencies:draftDeps.slice(), status:'pending', locked:draftLocked,
+      lockedDate:draftLocked?newDate:null, slipped:false, completedDate:null });
+  }
+  closeGateModal(); save(); render(); autoSyncToGantt();
+}
+
+/* KPI modal */
+function openKpiModal(){
+  document.getElementById('k-name').value=''; document.getElementById('k-target').value=''; document.getElementById('k-unit').value='';
+  document.getElementById('kpi-overlay').classList.add('open');
+  setTimeout(function(){ document.getElementById('k-name').focus(); }, 50);
+}
+function closeKpiModal(){ document.getElementById('kpi-overlay').classList.remove('open'); }
+function saveKpi(){
+  var name = document.getElementById('k-name').value.trim();
+  if(!name){ document.getElementById('k-name').focus(); return; }
+  draftKpis.push({ name:name, target:document.getElementById('k-target').value.trim(), unit:document.getElementById('k-unit').value.trim() });
+  closeKpiModal(); renderDraftKpis();
+}
+function delDraftKpi(i){ draftKpis.splice(i,1); renderDraftKpis(); }
+function renderDraftKpis(){
+  var el = document.getElementById('gate-kpi-list');
+  if(!draftKpis.length){ el.innerHTML='<div class="modal-empty">No targets added</div>'; return; }
+  el.innerHTML = draftKpis.map(function(k,i){
+    return '<div class="kpi-modal-row"><span>'+esc(k.name)+'</span><span style="color:#888">'+esc(k.target)+'</span><span style="color:#888">'+esc(k.unit)+'</span><button class="del-btn" onclick="delDraftKpi('+i+')">&#215;</button></div>';
+  }).join('');
+}
+
+/* Dep draft list in gate modal */
+function renderDraftDeps(){
+  var el = document.getElementById('gate-dep-list');
+  if(!draftDeps.length){ el.innerHTML='<div class="modal-empty">No dependencies added</div>'; return; }
+  var divL={fuelcell:'FC',electrolyzer:'EZ',exploration:'EX'};
+  el.innerHTML = draftDeps.map(function(d,i){
+    return '<div class="draft-dep-row">'+
+      '<span class="dep-type-badge dtype-'+d.type+'">'+( d.type==='blocking'?'F\u2192S':'F\u2192F')+'</span>'+
+      '<span class="draft-dep-name" title="'+esc(d.name)+'">'+esc(d.name)+(d.division?'<span style="color:#bbb;margin-left:5px;">'+esc(divL[d.division]||d.division)+'</span>':'')+'</span>'+
+      '<button class="del-btn" onclick="removeDraftDep('+i+')">&#215;</button>'+
+    '</div>';
+  }).join('');
+}
+function removeDraftDep(i){ draftDeps.splice(i,1); renderDraftDeps(); }
+
+/* Dep picker */
+var depPickerType = 'blocking';
+function setDepType(type){
+  depPickerType = type;
+  document.getElementById('dtt-blocking').className    = 'dep-type-btn'+(type==='blocking'?' dtb-blocking':'');
+  document.getElementById('dtt-synergistic').className = 'dep-type-btn'+(type==='synergistic'?' dtb-synergistic':'');
+}
+function openDepPickerModal(){
+  document.getElementById('dep-search').value = '';
+  document.getElementById('dep-div-filter').value = '';
+  document.getElementById('dep-type-filter').value = '';
+  setDepType('blocking');
+  renderDepPickerList();
+  document.getElementById('dep-picker-overlay').classList.add('open');
+  setTimeout(function(){ document.getElementById('dep-search').focus(); }, 50);
+}
+function closeDepPickerModal(){ document.getElementById('dep-picker-overlay').classList.remove('open'); }
+
+function renderDepPickerList(){
+  var el = document.getElementById('dep-picker-list');
+  if(!ganttCache || !ganttCache.length){
+    el.innerHTML = '<div class="modal-empty">No Gantt projects loaded. Open Gantt sync and click "Load objectives" first.</div>';
+    return;
+  }
+  var q     = (document.getElementById('dep-search').value||'').toLowerCase();
+  var divF  = document.getElementById('dep-div-filter').value;
+  var typeF = document.getElementById('dep-type-filter').value;
+  var divL = {fuelcell:'FC',electrolyzer:'EZ',exploration:'EX'};
+  var ptL  = {objective:'Objective',initiative:'Initiative',task:'Project',milestone:'Milestone',delivery:'Delivery',checklist:'Task'};
+  /* Allow stage-gates from OTHER objectives; exclude same-objective stage-gates and current objective */
+  var s = loadGanttSettings();
+  var filtered = ganttCache.filter(function(p){
+    if(p.isStageGate && p.parentId === s.parentId) return false; /* same-objective stage-gates */
+    if(p.id === s.parentId) return false; /* the objective itself */
+    if(divF && p.division !== divF) return false; /* division filter */
+    if(typeF){
+      if(typeF === 'stagegate' && !p.isStageGate) return false;
+      if(typeF !== 'stagegate' && (p.isStageGate || p.projectType !== typeF)) return false;
+    }
+    if(q && (p.name||'').toLowerCase().indexOf(q) < 0) return false;
+    return true;
+  });
+  /* Sort: objectives first, then stage-gates, then by name */
+  filtered.sort(function(a,b){
+    var ta = a.projectType==='objective'?0:a.isStageGate?1:a.projectType==='initiative'?2:3;
+    var tb = b.projectType==='objective'?0:b.isStageGate?1:b.projectType==='initiative'?2:3;
+    return ta!==tb ? ta-tb : (a.name||'').localeCompare(b.name||'');
+  });
+  if(!filtered.length){ el.innerHTML='<div class="modal-empty">No projects match.</div>'; return; }
+  el.innerHTML = filtered.map(function(p){
+    var typeLabel = p.isStageGate ? 'Stage-Gate' : (ptL[p.projectType]||p.projectType);
+    var divLabel  = divL[p.division]||p.division||'';
+    var parentLabel = '';
+    if(p.isStageGate && p.parentId){
+      for(var i=0; i<ganttCache.length; i++){
+        if(ganttCache[i].id===p.parentId){ parentLabel = ' \u00b7 '+esc(ganttCache[i].name); break; }
+      }
+    }
+    return '<div class="dep-picker-row" onclick="addDraftDepFromPicker('+p.id+')">'+
+      '<div class="dep-picker-name" title="'+esc(p.name)+'">'+esc(p.name)+'</div>'+
+      '<div class="dep-picker-meta">'+esc(divLabel)+' &middot; '+esc(typeLabel)+parentLabel+(p.end?' &middot; '+esc(p.end):'')+'</div>'+
+    '</div>';
+  }).join('');
+}
+
+function addDraftDepFromPicker(ganttProjectId){
+  var p = null;
+  for(var i=0; i<(ganttCache||[]).length; i++){ if(ganttCache[i].id===ganttProjectId){ p=ganttCache[i]; break; } }
+  if(!p) return;
+  /* Avoid duplicates */
+  for(var i=0; i<draftDeps.length; i++){ if(draftDeps[i].ganttProjectId===ganttProjectId) return; }
+  draftDeps.push({ ganttProjectId:ganttProjectId, name:p.name||'', division:p.division||'', type:depPickerType });
+  closeDepPickerModal();
+  renderDraftDeps();
+}
+function sodOptions(field, selected){
+  var L = {
+    severity:  ['None','Very minor','Minor','Low','Moderate','Significant','High','Very high','Hazardous','Critical'],
+    occurrence:['Unlikely','Remote','Very low','Low','Moderate','Medium-high','High','Very high','Very high+','Almost certain'],
+    detection: ['Almost certain','Very high','High','Moderately high','Moderate','Low','Very low','Remote','Very remote','Undetectable']
+  };
+  return L[field].map(function(lbl,i){
+    var v = i+1;
+    return '<option value="'+v+'"'+(v===selected?' selected':'')+'>'+v+' \u2014 '+lbl+'</option>';
+  }).join('');
+}
+function populateGateSelect(selectedGid){
+  var sel = document.getElementById('f-gate');
+  sel.innerHTML = '<option value="">&#8212; No gate association &#8212;</option>' +
+    sortedGates().map(function(e,n){
+      return '<option value="'+esc(e.m.gid)+'"'+(e.m.gid===selectedGid?' selected':'')+'>G'+(n+1)+' \u2014 '+esc(e.m.label)+'</option>';
+    }).join('');
+}
+function openFmeaModal(){
+  editingRiskIdx = null;
+  draftRisk = { pid:genId(), problem:'', gateId:'', modes:[] };
+  document.getElementById('f-problem').value = '';
+  document.getElementById('fmea-modal-title').textContent = 'Add problem';
+  document.getElementById('fmea-save-btn').textContent = 'Save problem';
+  populateGateSelect('');
+  renderFmeaModes();
+  document.getElementById('fmea-overlay').classList.add('open');
+  setTimeout(function(){ document.getElementById('f-problem').focus(); }, 50);
+}
+function openEditFmeaModal(ri){
+  editingRiskIdx = ri;
+  draftRisk = JSON.parse(JSON.stringify(risks[ri]));
+  document.getElementById('f-problem').value = draftRisk.problem || '';
+  document.getElementById('fmea-modal-title').textContent = 'Edit problem';
+  document.getElementById('fmea-save-btn').textContent = 'Save changes';
+  populateGateSelect(draftRisk.gateId || '');
+  renderFmeaModes();
+  document.getElementById('fmea-overlay').classList.add('open');
+  setTimeout(function(){ document.getElementById('f-problem').focus(); }, 50);
+}
+function closeFmeaModal(){ document.getElementById('fmea-overlay').classList.remove('open'); }
+
+function renderFmeaModes(){
+  var container = document.getElementById('fmea-modes-section');
+  if(!draftRisk.modes.length){
+    container.innerHTML = '<div class="modal-empty" style="padding:8px 0;">No failure modes added. Click &quot;+ Add failure mode&quot; to begin.</div>';
+    return;
+  }
+  container.innerHTML = draftRisk.modes.map(function(mode, mi){
+    var effectsHtml = '';
+    if(mode.effects && mode.effects.length){
+      effectsHtml = mode.effects.map(function(e, ei){
+        var causesHtml = '';
+        if(e.causes && e.causes.length){
+          causesHtml = e.causes.map(function(c, ci){
+            var rpn = calcRpn(c.severity, c.occurrence, c.detection);
+            return '<div class="modal-cause-block">'+
+              '<div class="modal-cause-head">'+
+                '<span class="modal-cause-num">Cause '+(ci+1)+'</span>'+
+                '<button class="del-btn" onclick="delDraftCause('+mi+','+ei+','+ci+')" title="Remove">&times;</button>'+
+              '</div>'+
+              '<textarea placeholder="Why might this failure occur?" oninput="draftRisk.modes['+mi+'].effects['+ei+'].causes['+ci+'].cause=this.value">'+esc(c.cause)+'</textarea>'+
+              '<div class="cause-sod-grid">'+
+                '<div class="sod-field"><span class="lbl">Severity (S)</span><select id="c-sev-'+mi+'-'+ei+'-'+ci+'" onchange="updateCauseRpn('+mi+','+ei+','+ci+')">'+sodOptions('severity',c.severity)+'</select></div>'+
+                '<div class="sod-field"><span class="lbl">Occurrence (O)</span><select id="c-occ-'+mi+'-'+ei+'-'+ci+'" onchange="updateCauseRpn('+mi+','+ei+','+ci+')">'+sodOptions('occurrence',c.occurrence)+'</select></div>'+
+                '<div class="sod-field"><span class="lbl">Detection (D)</span><select id="c-det-'+mi+'-'+ei+'-'+ci+'" onchange="updateCauseRpn('+mi+','+ei+','+ci+')">'+sodOptions('detection',c.detection)+'</select></div>'+
+                '<div class="rpn-cell"><span class="rpn-cell-lbl">RPN</span><span id="rpn-'+mi+'-'+ei+'-'+ci+'" class="rpn-badge '+rpnClass(rpn)+'">'+rpn+'</span></div>'+
+              '</div>'+
+              '<input type="text" placeholder="Mitigation / action" value="'+esc(c.mitigation)+'" oninput="draftRisk.modes['+mi+'].effects['+ei+'].causes['+ci+'].mitigation=this.value">'+
+            '</div>';
+          }).join('');
+        } else {
+          causesHtml = '<div class="modal-empty">No causes added yet.</div>';
+        }
+        return '<div class="modal-effect-block">'+
+          '<div class="modal-effect-head">'+
+            '<span class="modal-effect-head-lbl">Effect '+(ei+1)+'</span>'+
+            '<button class="del-btn" style="color:#888;" onclick="delDraftEffect('+mi+','+ei+')" title="Remove">&times;</button>'+
+          '</div>'+
+          '<div class="modal-effect-body">'+
+            '<textarea placeholder="What happens if this failure mode occurs?" oninput="draftRisk.modes['+mi+'].effects['+ei+'].effect=this.value">'+esc(e.effect)+'</textarea>'+
+            '<div>'+
+              '<div class="modal-causes-header">'+
+                '<span class="modal-section-lbl">Causes</span>'+
+                '<button class="btn-sm" onclick="addDraftCause('+mi+','+ei+')">+ Add cause</button>'+
+              '</div>'+
+              '<div class="modal-causes-list">'+causesHtml+'</div>'+
+            '</div>'+
+          '</div>'+
+        '</div>';
+      }).join('');
+    } else {
+      effectsHtml = '<div class="modal-empty">No effects added yet.</div>';
+    }
+    return '<div class="modal-mode-block">'+
+      '<div class="modal-mode-head">'+
+        '<span class="modal-mode-head-lbl">Failure mode '+(mi+1)+'</span>'+
+        '<button class="del-btn" style="color:#BA7517;" onclick="delDraftMode('+mi+')" title="Remove">&times;</button>'+
+      '</div>'+
+      '<div class="modal-mode-body">'+
+        '<textarea placeholder="What could go wrong?" oninput="draftRisk.modes['+mi+'].mode=this.value">'+esc(mode.mode)+'</textarea>'+
+        '<div>'+
+          '<div class="modal-effects-header">'+
+            '<span class="modal-section-lbl">Effects</span>'+
+            '<button class="btn-sm" onclick="addDraftEffect('+mi+')">+ Add effect</button>'+
+          '</div>'+
+          '<div class="modal-effects-list">'+effectsHtml+'</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function updateCauseRpn(mi, ei, ci){
+  var s = parseInt(document.getElementById('c-sev-'+mi+'-'+ei+'-'+ci).value);
+  var o = parseInt(document.getElementById('c-occ-'+mi+'-'+ei+'-'+ci).value);
+  var d = parseInt(document.getElementById('c-det-'+mi+'-'+ei+'-'+ci).value);
+  draftRisk.modes[mi].effects[ei].causes[ci].severity   = s;
+  draftRisk.modes[mi].effects[ei].causes[ci].occurrence = o;
+  draftRisk.modes[mi].effects[ei].causes[ci].detection  = d;
+  var rpn = calcRpn(s,o,d);
+  var el = document.getElementById('rpn-'+mi+'-'+ei+'-'+ci);
+  if(el){ el.textContent = rpn; el.className = 'rpn-badge '+rpnClass(rpn); }
+}
+function addDraftMode(){
+  draftRisk.modes.push({mid:genId(), mode:'', effects:[]});
+  renderFmeaModes();
+  setTimeout(function(){
+    var all = document.querySelectorAll('#fmea-modes-section .modal-mode-body textarea');
+    var last = all[all.length-1];
+    if(last){ last.focus(); last.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+  }, 30);
+}
+function delDraftMode(mi){ draftRisk.modes.splice(mi,1); renderFmeaModes(); }
+function addDraftEffect(mi){
+  draftRisk.modes[mi].effects.push({eid:genId(), effect:'', causes:[]});
+  renderFmeaModes();
+  setTimeout(function(){
+    var ei = draftRisk.modes[mi].effects.length - 1;
+    var el = document.querySelector('#fmea-modes-section .modal-mode-block:nth-child('+(mi+1)+') .modal-effect-block:last-child textarea');
+    if(el){ el.focus(); el.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+  }, 30);
+}
+function delDraftEffect(mi, ei){ draftRisk.modes[mi].effects.splice(ei,1); renderFmeaModes(); }
+function addDraftCause(mi, ei){
+  draftRisk.modes[mi].effects[ei].causes.push({cid:genId(), cause:'', severity:1, occurrence:1, detection:1, mitigation:'', status:'open'});
+  renderFmeaModes();
+  setTimeout(function(){
+    var ci = draftRisk.modes[mi].effects[ei].causes.length - 1;
+    var el = document.getElementById('rpn-'+mi+'-'+ei+'-'+ci);
+    if(el) el.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }, 30);
+}
+function delDraftCause(mi, ei, ci){ draftRisk.modes[mi].effects[ei].causes.splice(ci,1); renderFmeaModes(); }
+function saveFmea(){
+  var problem = document.getElementById('f-problem').value.trim();
+  if(!problem){ document.getElementById('f-problem').focus(); return; }
+  draftRisk.problem = problem;
+  draftRisk.gateId  = document.getElementById('f-gate').value || null;
+  if(editingRiskIdx !== null) risks[editingRiskIdx] = draftRisk;
+  else risks.push(draftRisk);
+  closeFmeaModal(); save(); render();
+}
+
+function setProblemStatus(ri, status){ risks[ri].status=status; save(); render(); }
+function setModeStatus(ri, mi, status){ risks[ri].modes[mi].status=status; save(); render(); }
+function setEffectStatus(ri, mi, ei, status){ risks[ri].modes[mi].effects[ei].status=status; save(); render(); }
+
+/* Direct card updates */
+function setCauseStatus(ri, mi, ei, ci, status){ risks[ri].modes[mi].effects[ei].causes[ci].status = status; save(); render(); }
+function delCause(ri, mi, ei, ci){
+  risks[ri].modes[mi].effects[ei].causes.splice(ci,1);
+  if(!risks[ri].modes[mi].effects[ei].causes.length) risks[ri].modes[mi].effects.splice(ei,1);
+  if(!risks[ri].modes[mi].effects.length) risks[ri].modes.splice(mi,1);
+  save(); render();
+}
+function delRk(ri){ risks.splice(ri,1); save(); render(); }
+
+/* Gate actions */
+function setMs(i, status){
+  var prev = milestones[i].status;
+  milestones[i].status = status;
+  if(status === 'hit'){
+    /* Set completion date to today if not already set */
+    if(!milestones[i].completedDate){
+      milestones[i].completedDate = new Date().toISOString().slice(0,10);
+    }
+  } else if(prev === 'hit'){
+    /* Unmarking passed — clear completion date */
+    milestones[i].completedDate = null;
+  }
+  var sg = sortedGates();
+  var cur = -1;
+  for(var x=0; x<sg.length; x++){ if(sg[x].i === i){ cur=x; break; } }
+  if(cur >= 0 && cur+1 < sg.length){
+    var nextM = milestones[sg[cur+1].i];
+    if(status === 'hit'){
+      if(nextM.status === 'pending') nextM.status = 'active';
+    } else if(prev === 'hit'){
+      if(nextM.status === 'active') nextM.status = 'pending';
+    }
+  }
+  save(); render(); autoSyncToGantt();
+}
+function delMs(i){
+  var ganttId = milestones[i] && milestones[i].ganttMilestoneId;
+  if(ganttId && deletedGanttIds.indexOf(ganttId) === -1) deletedGanttIds.push(ganttId);
+  milestones.splice(i,1);
+  save(); render(); autoSyncToGantt();
+}
+
+/* Render */
+var fmeaCollapsed = true;
+function toggleFmeaPanel(){
+  fmeaCollapsed = !fmeaCollapsed;
+  document.getElementById('rk-list').style.display = fmeaCollapsed ? 'none' : '';
+  document.getElementById('fmea-chevron').style.transform = fmeaCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)';
+}
+
+function render(){ try{ updateWeekDisplay(); renderMs(); renderRk(); renderMetrics(); renderBars(); } catch(e){ console.error('render error',e); } }
+
+function renderKpiTable(kpis){
+  if(!kpis || !kpis.length) return '';
+  return '<table class="kpi-table"><colgroup><col style="width:50%"><col style="width:25%"><col style="width:25%"></colgroup>'+
+    '<thead><tr><th>KPI</th><th>Target</th><th>Unit</th></tr></thead><tbody>'+
+    kpis.map(function(k){ return '<tr><td>'+esc(k.name)+'</td><td>'+esc(k.target)+'</td><td>'+esc(k.unit)+'</td></tr>'; }).join('')+
+    '</tbody></table>';
+}
+
+function topRisksForGate(gid, n){
+  var causes = [];
+  try {
+    risks.forEach(function(r){
+      if(r.gateId !== gid || r.status==='resolved') return;
+      (r.modes||[]).forEach(function(m){
+        if(m.status==='resolved') return;
+        (m.effects||[]).forEach(function(e){
+          if(e.status==='resolved') return;
+          (e.causes||[]).forEach(function(c){
+            if(c.status!=='resolved') causes.push({ mode:m.mode||'', cause:c.cause||'', rpn:calcRpn(c.severity,c.occurrence,c.detection), status:c.status||'open' });
+          });
+        });
+      });
+    });
+  } catch(e){}
+  causes.sort(function(a,b){ return b.rpn - a.rpn; });
+  return causes.slice(0, n||3);
+}
+
+function renderMs(){
+  var el = document.getElementById('ms-list');
+  var w  = getCurWeek();
+  if(!milestones.length){ el.innerHTML = '<div class="empty-msg">No stage-gates added</div>'; return; }
+  var sg = sortedGates();
+  el.innerHTML = sg.map(function(entry, n){
+    var m = entry.m, i = entry.i, num = n+1;
+    var gw  = dateToWeek(m.date);
+    var due = gw !== null ? gw <= w : false;
+    var dCls = dateStatusClass(m.date, m.status);
+    var lockBadge  = m.locked ? '<span class="lock-badge">&#128274;</span>' : '';
+    var slipHtml   = (m.slipped && m.lockedDate) ? '<span class="slip-notice-card">&#9888; Catch-up plan enacted &middot; was '+formatDate(m.lockedDate)+'</span>' : '';
+    var intentionHtml = m.intention ? '<div class="gate-intention"><span class="gate-meta-lbl">Intention</span> '+esc(m.intention)+'</div>' : '';
+    var dp = '';
+    if(m.status === 'hit' && m.completedDate){
+      dp = '<div class="gate-date-row"><span class="gate-meta-lbl">Completed</span><span class="gate-meta-val date-future" style="color:var(--success,#22c55e);">'+formatDate(m.completedDate)+'</span>'+(m.date && m.completedDate !== m.date ? '<span style="font-size:11px;color:#aaa;margin-left:6px;">due '+formatDate(m.date)+'</span>' : '')+'</div>';
+    } else if(m.date){
+      dp = '<div class="gate-date-row"><span class="gate-meta-lbl">Due</span><span class="gate-meta-val '+dCls+'">'+formatDate(m.date)+(gw?' &middot; W'+gw:'')+lockBadge+'</span>'+(slipHtml?' '+slipHtml:'')+'</div>';
+    }
+
+    var topRisks  = topRisksForGate(m.gid, 3);
+    var risksHtml = '';
+    if(topRisks.length){
+      var sLabel = {open:'Open', mitigating:'Mitigating', resolved:'Resolved'};
+      var sCls   = {open:'css-open', mitigating:'css-mitigating', resolved:'css-resolved'};
+      risksHtml = '<div class="gate-risks"><span class="gate-meta-lbl">Top risks</span>'+
+        topRisks.map(function(r, idx){
+          return '<div class="gate-risk-row">'+
+            '<span class="gate-risk-rank">'+(idx+1)+'.</span>'+
+            '<span class="gate-risk-label" title="'+esc(r.cause)+'">'+esc(r.cause)+
+              (r.mode ? '<span class="gate-risk-context"> &mdash; '+esc(r.mode)+'</span>' : '')+
+            '</span>'+
+            '<div class="gate-risk-badges">'+
+              '<span class="rpn-badge '+rpnClass(r.rpn)+'">RPN&nbsp;'+r.rpn+'</span>'+
+              '<span class="css-btn '+(sCls[r.status]||'css-open')+'" style="border-radius:3px;border:none;padding:2px 7px;">'+esc(sLabel[r.status]||'Open')+'</span>'+
+            '</div>'+
+          '</div>';
+        }).join('')+
+      '</div>';
+    }
+
+    /* Dependencies */
+    var depsHtml = '';
+    if(m.dependencies && m.dependencies.length){
+      var today = new Date().toISOString().slice(0,10);
+      var divL = {fuelcell:'FC',electrolyzer:'EZ',exploration:'EX'};
+      var typeL = {blocking:'F\u2192S', synergistic:'F\u2192F'};
+      depsHtml = '<div class="gate-deps"><span class="gate-meta-lbl">Dependencies</span>'+
+        m.dependencies.map(function(d){
+          /* Look up live status from ganttCache */
+          var depProj = null;
+          for(var x=0; x<(ganttCache||[]).length; x++){ if(ganttCache[x].id===d.ganttProjectId){ depProj=ganttCache[x]; break; } }
+          var statusCls='dep-pending', statusTxt='Pending';
+          if(depProj){
+            if(depProj.manuallyCompleted||depProj.progress>=100){ statusCls='dep-passed'; statusTxt='Passed'; }
+            else if(depProj.end && depProj.end < today){ statusCls='dep-overdue'; statusTxt='Overdue'; }
+            else if(depProj.status==='active'||depProj.progress>0){ statusCls='dep-active'; statusTxt='In progress'; }
+          }
+          return '<div class="gate-dep-row">'+
+            '<span class="dep-type-badge dtype-'+(d.type||'blocking')+'">'+esc(typeL[d.type||'blocking'])+'</span>'+
+            '<span class="gate-dep-name" title="'+esc(d.name)+'">'+esc(d.name)+'</span>'+
+            (d.division?'<span style="font-size:10px;color:#aaa;">'+esc(divL[d.division]||d.division)+'</span>':'')+
+            '<span class="dep-status-badge '+statusCls+'">'+statusTxt+'</span>'+
+          '</div>';
+        }).join('')+
+      '</div>';
+    }
+
+    var metaHtml = '';
+    if(m.intention || m.date || (m.kpis && m.kpis.length) || topRisks.length || depsHtml){
+      metaHtml = '<div class="gate-card-meta">'+intentionHtml+dp+renderKpiTable(m.kpis)+depsHtml+risksHtml+'</div>';
+    }
+
+    return '<div class="gate-card"><div class="gate-card-top">'+
+      '<div class="gate-num" onclick="openEditGateModal('+i+')" title="Edit">G'+num+'</div>'+
+      '<div class="gate-card-label" onclick="openEditGateModal('+i+')" title="Edit">'+esc(m.label)+'</div>'+
+      '<div class="gate-card-actions"><div class="seg">'+
+        '<button class="seg-btn'+(m.status==='pending'?' seg-pending':'')+'" onclick="setMs('+i+',\'pending\')">'+(due?'Pending':'Upcoming')+'</button>'+
+        '<button class="seg-btn'+(m.status==='active'?' seg-active':'')+'" onclick="setMs('+i+',\'active\')">In progress</button>'+
+        '<button class="seg-btn'+(m.status==='hit'?' seg-hit':'')+'" onclick="setMs('+i+',\'hit\')">Passed</button>'+
+        '<button class="seg-btn'+(m.status==='missed'?' seg-missed':'')+'" onclick="setMs('+i+',\'missed\')">Failed</button>'+
+      '</div><button class="del-btn" onclick="delMs('+i+')" style="font-size:16px;">&times;</button></div></div>'+metaHtml+'</div>';
+  }).join('');
+}
+
+function renderRk(){
+  var el = document.getElementById('rk-list');
+  if(!risks.length){ el.innerHTML = '<div class="empty-msg">No problems added</div>'; return; }
+  var gates = sortedGates();
+  var sorted = risks.map(function(r,i){
+    var gNum=null, gComplete=false;
+    if(r.gateId){
+      for(var j=0; j<gates.length; j++){ if(gates[j].m.gid===r.gateId){ gNum=j+1; gComplete=gates[j].m.status==='hit'; break; } }
+    }
+    var group = r.gateId ? (gComplete ? 2 : 0) : 1;
+    return { r:r, i:i, group:group, gNum:gNum!==null?gNum:9999, rpn:worstUnresolvedRpn(r) };
+  }).sort(function(a,b){
+    if(a.group !== b.group) return a.group - b.group;
+    if(a.gNum  !== b.gNum)  return a.gNum  - b.gNum;
+    return b.rpn - a.rpn;
+  });
+
+  el.innerHTML = sorted.map(function(entry){
+    var r = entry.r, ri = entry.i;
+    var topRpn = entry.rpn > 0 ? entry.rpn : (r.resolved ? 0 : worstRpn(r));
+    var gNum   = r.gateId ? gateNumForGid(r.gateId) : null;
+    var gTag   = gNum ? '<span class="gate-tag" style="margin-right:4px;">G'+gNum+'</span>' : '';
+    var probResolved = r.status==='resolved';
+
+    /* Build flat row list — attach mode/effect resolved state to each row */
+    var rows = [];
+    (r.modes||[]).forEach(function(mode, mi){
+      var modeResolved = mode.status==='resolved';
+      var modeRs = 0;
+      if(!mode.effects || !mode.effects.length){ modeRs=1; }
+      else mode.effects.forEach(function(e){ modeRs += Math.max(1,(e.causes||[]).length); });
+
+      var modeUsed = false;
+      if(!mode.effects || !mode.effects.length){
+        rows.push({modeText:mode.mode, modeRs:1, effectText:'', effectRs:1, cause:null, ri:ri, mi:mi, ei:-1, ci:-1, newMode:true, modeResolved:modeResolved, effectResolved:false});
+        return;
+      }
+      mode.effects.forEach(function(e, ei){
+        var effectResolved = e.status==='resolved';
+        var effRs = Math.max(1,(e.causes||[]).length);
+        if(!e.causes || !e.causes.length){
+          rows.push({modeText:!modeUsed?mode.mode:'', modeRs:!modeUsed?modeRs:0, effectText:e.effect, effectRs:1, cause:null, ri:ri, mi:mi, ei:ei, ci:-1, newMode:!modeUsed, modeResolved:modeResolved, effectResolved:effectResolved});
+          modeUsed=true; return;
+        }
+        e.causes.forEach(function(c, ci){
+          var showMode = !modeUsed && ci===0;
+          rows.push({modeText:showMode?mode.mode:'', modeRs:showMode?modeRs:0, effectText:ci===0?e.effect:'', effectRs:ci===0?effRs:0, cause:c, ri:ri, mi:mi, ei:ei, ci:ci, newMode:showMode, modeResolved:modeResolved, effectResolved:effectResolved});
+          if(ci===0) modeUsed=true;
+        });
+      });
+    });
+
+    var thead = '<thead><tr><th>Failure mode</th><th>Effect</th><th>Cause</th><th style="text-align:center;">S&middot;O&middot;D</th><th style="text-align:center;">RPN</th><th>Status</th><th></th></tr></thead>';
+
+    var tbody = rows.map(function(row, idx){
+      var trCls = [];
+      if(row.newMode && idx > 0) trCls.push('mode-sep');
+      if(row.modeResolved)   trCls.push('mode-resolved');
+      if(row.effectResolved) trCls.push('effect-resolved');
+      var tr = '<tr'+(trCls.length?' class="'+trCls.join(' ')+'"':'')+' >';
+
+      if(row.modeRs > 0){
+        var ms = (risks[row.ri].modes[row.mi].status)||'open';
+        var mSeg = '<div class="level-seg">'+
+          '<button class="level-seg-btn'+(ms==='open'?' lsb-open':'')+'" onclick="setModeStatus('+row.ri+','+row.mi+',\'open\')">Open</button>'+
+          '<button class="level-seg-btn'+(ms==='mitigating'?' lsb-mitigating':'')+'" onclick="setModeStatus('+row.ri+','+row.mi+',\'mitigating\')">Mitigating</button>'+
+          '<button class="level-seg-btn'+(ms==='resolved'?' lsb-resolved':'')+'" onclick="setModeStatus('+row.ri+','+row.mi+',\'resolved\')">Resolved</button>'+
+          '</div>';
+        tr += '<td class="cell-mode" rowspan="'+row.modeRs+'" style="vertical-align:top;">'+
+          '<div style="display:flex;flex-direction:column;gap:5px;"><span>'+esc(row.modeText)+'</span>'+mSeg+'</div></td>';
+      }
+      if(row.effectRs > 0){
+        var es = (row.ei >= 0 ? (risks[row.ri].modes[row.mi].effects[row.ei].status)||'open' : null);
+        var eSeg = (row.ei >= 0) ? '<div class="level-seg">'+
+          '<button class="level-seg-btn'+(es==='open'?' lsb-open':'')+'" onclick="setEffectStatus('+row.ri+','+row.mi+','+row.ei+',\'open\')">Open</button>'+
+          '<button class="level-seg-btn'+(es==='mitigating'?' lsb-mitigating':'')+'" onclick="setEffectStatus('+row.ri+','+row.mi+','+row.ei+',\'mitigating\')">Mitigating</button>'+
+          '<button class="level-seg-btn'+(es==='resolved'?' lsb-resolved':'')+'" onclick="setEffectStatus('+row.ri+','+row.mi+','+row.ei+',\'resolved\')">Resolved</button>'+
+          '</div>' : '';
+        tr += '<td class="cell-effect" rowspan="'+row.effectRs+'" style="vertical-align:top;">'+
+          '<div style="display:flex;flex-direction:column;gap:5px;"><span>'+esc(row.effectText)+'</span>'+eSeg+'</div></td>';
+      }
+      if(row.cause){
+        var c = row.cause, rpn = calcRpn(c.severity,c.occurrence,c.detection), cs = c.status||'open';
+        var rpnHidden = row.modeResolved || row.effectResolved;
+        tr += '<td class="cell-cause">'+esc(c.cause)+(c.mitigation?'<div class="cell-cause-mit">'+esc(c.mitigation)+'</div>':'')+'</td>';
+        tr += '<td class="cell-sod">'+c.severity+'\u00b7'+c.occurrence+'\u00b7'+c.detection+'</td>';
+        tr += '<td class="cell-rpn">'+(rpnHidden?'<span style="color:#ccc;font-size:10px;">&#8212;</span>':'<span class="rpn-badge '+rpnClass(rpn)+'">'+rpn+'</span>')+'</td>';
+        tr += '<td><div class="css-seg">'+
+          '<button class="css-btn'+(cs==='open'?' css-open':'')+'" onclick="setCauseStatus('+row.ri+','+row.mi+','+row.ei+','+row.ci+',\'open\')">Open</button>'+
+          '<button class="css-btn'+(cs==='mitigating'?' css-mitigating':'')+'" onclick="setCauseStatus('+row.ri+','+row.mi+','+row.ei+','+row.ci+',\'mitigating\')">Mitigating</button>'+
+          '<button class="css-btn'+(cs==='resolved'?' css-resolved':'')+'" onclick="setCauseStatus('+row.ri+','+row.mi+','+row.ei+','+row.ci+',\'resolved\')">Resolved</button>'+
+          '</div></td>';
+        tr += '<td class="cell-del"><button class="del-btn" onclick="delCause('+row.ri+','+row.mi+','+row.ei+','+row.ci+')" title="Remove">&times;</button></td>';
+      } else {
+        tr += '<td colspan="5" class="cell-empty"></td>';
+      }
+      return tr + '</tr>';
+    }).join('');
+
+    var tableHtml = (r.modes||[]).length ?
+      '<div class="fmea-table-wrap"><table class="fmea-table"><colgroup>'+
+        '<col class="col-mode"><col class="col-effect"><col class="col-cause">'+
+        '<col class="col-sod"><col class="col-rpn"><col class="col-status"><col class="col-del">'+
+        '</colgroup>'+thead+'<tbody>'+tbody+'</tbody></table></div>' : '';
+
+    var ps = r.status || 'open';
+    var pSeg = '<div class="prob-seg">'+
+      '<button class="prob-seg-btn'+(ps==='open'?' lsb-open':'')+'" onclick="setProblemStatus('+ri+',\'open\')">Open</button>'+
+      '<button class="prob-seg-btn'+(ps==='mitigating'?' lsb-mitigating':'')+'" onclick="setProblemStatus('+ri+',\'mitigating\')">Mitigating</button>'+
+      '<button class="prob-seg-btn'+(ps==='resolved'?' lsb-resolved':'')+'" onclick="setProblemStatus('+ri+',\'resolved\')">Resolved</button>'+
+      '</div>';
+
+    return '<div class="fmea-card'+(probResolved?' problem-resolved':'')+'">'+
+      '<div class="fmea-problem-row">'+
+        '<div class="fmea-problem-text" onclick="openEditFmeaModal('+ri+')" title="Edit problem">'+gTag+esc(r.problem)+'</div>'+
+        '<div class="fmea-top-right">'+
+          pSeg+
+          (topRpn ? '<span class="rpn-badge '+rpnClass(topRpn)+'">RPN&nbsp;'+topRpn+'</span>' : '')+
+          '<button class="del-btn" onclick="delRk('+ri+')" title="Remove problem" style="font-size:16px;">&times;</button>'+
+        '</div>'+
+      '</div>'+tableHtml+
+    '</div>';
+  }).join('');
+}
+
+function renderMetrics(){
+  var w   = getCurWeek();
+  var due = milestones.filter(function(m){ var gw=dateToWeek(m.date); return gw!==null && gw<=w; });
+  var hit = due.filter(function(m){ return m.status==='hit'; });
+  var hr  = due.length ? Math.round(hit.length/due.length*100) : null;
+  var openHigh  = risks.filter(function(r){ return worstUnresolvedRpn(r)>=200; }).length;
+  var totalRisks = risks.length;
+  document.getElementById('m-rate').textContent = hr!==null ? hr+'%' : '\u2014';
+  document.getElementById('m-sub').textContent  = due.length ? hit.length+' of '+due.length+' due gates passed' : 'No gates due yet';
+  document.getElementById('r-rate').textContent = totalRisks ? openHigh : '\u2014';
+  document.getElementById('r-sub').textContent  = totalRisks ? (openHigh===0 ? 'No high-RPN items open' : openHigh+' problem'+(openHigh>1?'s':'')+' with RPN \u2265 200') : 'No FMEA items added';
+  var sigEl = document.getElementById('sig'), subEl = document.getElementById('sig-sub');
+  if(hr===null && !totalRisks){ sigEl.innerHTML='\u2014'; subEl.textContent='Add data to generate signal'; return; }
+  var h     = hr!==null ? hr : 100;
+  var slips = milestones.filter(function(m){ return m.slipped && m.status!=='hit' && m.status!=='missed'; }).length;
+  var color, label, reason;
+  if(slips>=2 || (slips>=1 && h<60) || openHigh>=3){
+    color='#E24B4A'; label='At risk';
+    reason = openHigh>=3 ? openHigh+' high-RPN problems unresolved' : slips+' catch-up plan'+(slips>1?'s':'')+' active';
+  } else if(h>=70 && slips===0 && openHigh===0){
+    color='#639922'; label='On track'; reason='Gate pass rate healthy, no high-RPN items open';
+  } else if(h<50 || (w>=6 && openHigh>=2)){
+    color='#E24B4A'; label='At risk'; reason='Recovery within quarter is unlikely';
+  } else {
+    color='#BA7517'; label='Watch closely';
+    var rr = [];
+    if(slips>0)    rr.push(slips+' catch-up plan'+(slips>1?'s':'')+' active');
+    if(openHigh>0) rr.push(openHigh+' high-RPN problem'+(openHigh>1?'s':'')+' open');
+    reason = rr.length ? rr.join('; ') : 'One or more signals lagging';
+  }
+  sigEl.innerHTML = '<span class="sdot" style="background:'+color+';"></span>'+label;
+  subEl.textContent = reason;
+}
+
+function renderBars(){
+  var w = getCurWeek(), html = '';
+  for(var i=1; i<=13; i++){
+    var due  = milestones.filter(function(m){ var gw=dateToWeek(m.date); return gw!==null && gw<=i; });
+    var hit  = due.filter(function(m){ return m.status==='hit'; });
+    var rate = due.length ? hit.length/due.length : null;
+    var h    = rate!==null ? Math.round(rate*44) : 0;
+    var bg   = (i>w || rate===null) ? '#ddd' : rate>=0.7 ? '#639922' : rate>=0.5 ? '#BA7517' : '#E24B4A';
+    html += '<div class="bw"><div class="b'+(i===w?' b-now':'')+'" style="height:'+Math.max(h,2)+'px;background:'+bg+';width:100%;"></div><div class="bwk">'+i+'</div></div>';
+  }
+  document.getElementById('bars').innerHTML = html;
+}
+
+function clearAll(){
+  if(!confirm('Clear all data?')) return;
+  milestones=[]; risks=[];
+  ['proj','qtr','qstart'].forEach(function(id){ document.getElementById(id).value=''; });
+  try{ localStorage.removeItem(getStorageKey()); } catch(e){}
+  updateTitle(); render();
+}
+function exportHtml(){
+  var state = '<scr'+'ipt>milestones='+JSON.stringify(milestones)+';risks='+JSON.stringify(risks)+';<'+'/script>';
+  var html  = document.documentElement.outerHTML.replace(/<\/body>[\s\S]*$/, state+'</body></html>');
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([html],{type:'text/html'}));
+  a.download = 'q-tracker-snapshot.html'; a.click(); URL.revokeObjectURL(a.href);
+}
+
+/* ── Gantt sync ─────────────────────────────────────────── */
+var _syncTimer = null;
+function showSyncIndicator(state){
+  var el = document.getElementById('sync-dot');
+  if(!el) return;
+  clearTimeout(_syncTimer);
+  var labels = {syncing:'\u21bb Syncing\u2026', synced:'\u2713 Synced', error:'\u26a0 Sync failed'};
+  el.textContent = labels[state] || '';
+  el.className = 'sync-dot show ' + state;
+  if(state !== 'syncing'){
+    _syncTimer = setTimeout(function(){ el.className = 'sync-dot ' + state; }, 3000);
+  }
+}
+
+async function autoSyncToGantt(){
+  var s      = loadGanttSettings();
+  var binId  = GANTT_BIN_ID  || s.binId;
+  var apiKey = GANTT_API_KEY || s.apiKey;
+  if(!binId || !apiKey || !s.parentId) return;
+  showSyncIndicator('syncing');
+  try {
+    var resp = await fetch('https://api.jsonbin.io/v3/b/'+binId+'/latest',{
+      headers:{'Content-Type':'application/json','X-Master-Key':apiKey,'X-Bin-Meta':'false'}
+    });
+    if(!resp.ok){ showSyncIndicator('error'); return; }
+    var wrapper   = await resp.json();
+    var ganttData = wrapper.record || wrapper;
+    if(!Array.isArray(ganttData.projects)) ganttData.projects = [];
+    ganttCache = ganttData.projects; /* keep live reference for dep picker */
+    var objIdx = -1;
+    for(var j=0; j<ganttData.projects.length; j++){ if(ganttData.projects[j].id===s.parentId){ objIdx=j; break; } }
+    if(objIdx < 0){ showSyncIndicator('error'); return; }
+    var maxId=9999;
+    for(var j=0; j<ganttData.projects.length; j++){ if(typeof ganttData.projects[j].id==='number' && ganttData.projects[j].id>maxId) maxId=ganttData.projects[j].id; }
+    var nextId=maxId+1, sg=sortedGates();
+    var trackerMilestoneIds={};
+    for(var k2=0; k2<milestones.length; k2++){ if(milestones[k2].ganttMilestoneId) trackerMilestoneIds[milestones[k2].ganttMilestoneId]=true; }
+    var obj=ganttData.projects[objIdx];
+    var existingTemplate = (obj.stageGates||[]).slice(); /* snapshot before we rebuild */
+    var prevGateEnd = '', prevGanttId = null;
+    for(var n=0; n<sg.length; n++){
+      var gate=sg[n].m;
+      if(!gate.date) continue;
+      /* If no link yet, try to adopt an existing Gantt-native sub-project by name */
+      if(!gate.ganttMilestoneId){
+        for(var t=0; t<existingTemplate.length; t++){
+          var te=existingTemplate[t];
+          if(te.subProjectId && (te.name||'').trim().toLowerCase()===(gate.label||'').trim().toLowerCase()){
+            gate.ganttMilestoneId=te.subProjectId; break;
+          }
+        }
+      }
+      var fields=buildGanttStageGate(gate,s,prevGateEnd,prevGanttId);
+      prevGateEnd = gate.date;
+      if(gate.ganttMilestoneId){
+        var found=-1;
+        for(var k=0; k<ganttData.projects.length; k++){ if(ganttData.projects[k].id===gate.ganttMilestoneId){ found=k; break; } }
+        if(found>=0){
+          var existing = ganttData.projects[found];
+          var ownedByThis = (existing.parentId===s.parentId) ||
+                            (existing.stageGateId==='qt-'+gate.gid) ||
+                            trackerMilestoneIds[existing.id];
+          if(ownedByThis){
+            var preservedSgId = (existing.stageGateId && existing.stageGateId.indexOf('sg-')===0) ? existing.stageGateId : fields.stageGateId;
+            var updatedProj = Object.assign({},existing,fields,{id:gate.ganttMilestoneId,parentId:s.parentId,stageGateId:preservedSgId});
+            ganttData.projects[found] = updatedProj;
+          }
+        }
+        else { var nid=nextId++; ganttData.projects.push(Object.assign({},fields,{locked:false,id:nid})); gate.ganttMilestoneId=nid; }
+        prevGanttId = gate.ganttMilestoneId;
+      } else {
+        var nid=nextId++; ganttData.projects.push(Object.assign({},fields,{locked:false,id:nid})); gate.ganttMilestoneId=nid;
+        prevGanttId = nid;
+      }
+    }
+    /* Remove tombstoned projects from Gantt before rebuilding */
+    if(deletedGanttIds.length){
+      ganttData.projects = ganttData.projects.filter(function(p){
+        return deletedGanttIds.indexOf(p.id) === -1;
+      });
+    }
+    /* Rebuild stageGates template — preserve existing entry ids so Gantt never deletes sub-projects */
+    var filteredSg = sg.filter(function(e){ return !!e.m.date; });
+    obj.stageGates=filteredSg.map(function(e,idx){
+      var g=e.m;
+      var tId='qt-'+g.gid;
+      for(var t=0; t<existingTemplate.length; t++){
+        var te=existingTemplate[t];
+        if((te.subProjectId && te.subProjectId===g.ganttMilestoneId) ||
+           (te.name||'').trim().toLowerCase()===(g.label||'').trim().toLowerCase()){
+          tId=te.id; break;
+        }
+      }
+      /* Start = depEnd + 1 day via shared computeGateStart */
+      var prevGateDateT = idx > 0 ? filteredSg[idx-1].m.date : '';
+      var gStart = computeGateStart(g, prevGateDateT, s.parentId);
+      if(g.date && gStart > g.date) gStart = g.date;
+      return{id:tId,name:g.label||'Gate',endDate:g.date,startDate:gStart,subProjectId:g.ganttMilestoneId||null,
+        baselineEndDate:g.lockedDate||null,
+        kpis:(g.kpis||[]).map(function(k){ return{name:k.name+(k.unit?' ('+k.unit+')':''),direction:'increase',target:parseFloat(k.target)||0,current:0}; })};
+    });
+    obj.stageGatesLinked=true;
+    writeTrackerData(ganttData, s.parentId);
+    save();
+    var payload=Object.assign({},ganttData,{_version:(ganttData._version||0)+1,_savedBy:'Q Tracker',_savedAt:new Date().toISOString()});
+    var put=await fetch('https://api.jsonbin.io/v3/b/'+binId,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':apiKey},body:JSON.stringify(payload)});
+    showSyncIndicator(put.ok?'synced':'error');
+    if(put.ok) _lastKnownVersion = (ganttData._version||0)+1;
+  } catch(e){ console.warn('Auto-sync failed:',e.message); showSyncIndicator('error'); }
+}
+
+/* ── FMEA / tracker data sync to JSONbin ─────────────────────────────────
+   Stored under ganttData._trackerData[parentId] — invisible to the Gantt,
+   keyed per objective so multiple trackers on the same bin stay isolated. */
+function writeTrackerData(ganttData, parentId){
+  if(!parentId) return;
+  if(!ganttData._trackerData) ganttData._trackerData = {};
+  ganttData._trackerData[String(parentId)] = { risks: risks, deletedGanttIds: deletedGanttIds };
+}
+function readTrackerData(ganttData, parentId){
+  if(!parentId || !ganttData._trackerData) return false;
+  var td = ganttData._trackerData[String(parentId)];
+  if(!td) return false;
+  var changed = false;
+  /* Merge risks */
+  if(Array.isArray(td.risks) && JSON.stringify(td.risks) !== JSON.stringify(risks)){
+    risks = td.risks; changed = true;
+  }
+  /* Merge tombstones — union of both sides */
+  if(Array.isArray(td.deletedGanttIds)){
+    var before = deletedGanttIds.length;
+    td.deletedGanttIds.forEach(function(id){
+      if(deletedGanttIds.indexOf(id) === -1) deletedGanttIds.push(id);
+    });
+    if(deletedGanttIds.length !== before) changed = true;
+  }
+  return changed;
+}
+
+function loadGanttSettings(){
+  if(_sessionSettings) return _sessionSettings;
+  try{ return JSON.parse(localStorage.getItem(getGanttSettingsKey())) || {}; } catch(e){ return {}; }
+}
+function saveGanttSettings(){
+  var sel = document.getElementById('gs-parentid');
+  var parentId   = parseInt(sel.value) || null;
+  var parentName = (parentId && sel.selectedIndex >= 0) ? sel.options[sel.selectedIndex].text : '';
+  var s = {
+    binId:      document.getElementById('gs-binid').value.trim(),
+    apiKey:     document.getElementById('gs-apikey').value.trim(),
+    division:   document.getElementById('gs-division').value,
+    year:       parseInt(document.getElementById('gs-year').value) || new Date().getFullYear(),
+    quarter:    parseInt(document.getElementById('gs-quarter').value) || 1,
+    parentId:   parentId,
+    parentName: parentName
+  };
+  if(_sessionSettings){
+    /* URL-param mode — update in-memory session only, never touch shared localStorage */
+    _sessionSettings = Object.assign({}, _sessionSettings, s);
+  } else {
+    try{ localStorage.setItem(getGanttSettingsKey(), JSON.stringify(s)); } catch(e){}
+  }
+  return s;
+}
+function openGanttSyncModal(){
+  var s = loadGanttSettings();
+  document.getElementById('gs-binid').value    = GANTT_BIN_ID  || s.binId  || '';
+  document.getElementById('gs-apikey').value   = GANTT_API_KEY || s.apiKey || '';
+  document.getElementById('gs-division').value = s.division || 'fuelcell';
+
+  /* Default year/quarter from tracker setup, fall back to saved, then current */
+  var trackerQtr = document.getElementById('qtr').value || ''; /* e.g. "Q2 2026" */
+  var qMatch = trackerQtr.match(/Q([1-4])\s+(\d{4})/i);
+  var defaultYear = qMatch ? parseInt(qMatch[2]) : (s.year || new Date().getFullYear());
+  var defaultQ    = qMatch ? parseInt(qMatch[1]) : (s.quarter || Math.floor(new Date().getMonth()/3)+1);
+  document.getElementById('gs-year').value    = s.year    || defaultYear;
+  document.getElementById('gs-quarter').value = s.quarter || defaultQ;
+
+  var sel = document.getElementById('gs-parentid');
+  if(s.parentId){
+    sel.innerHTML = '<option value="">&#8212; None &#8212;</option>'+
+      '<option value="'+s.parentId+'" selected>'+esc(s.parentName || 'Project ID '+s.parentId)+'</option>';
+  } else {
+    sel.innerHTML = '<option value="">&#8212; Load objectives first &#8212;</option>';
+  }
+  gsStatus('', '');
+  renderGanttGateList();
+  if(GANTT_BIN_ID && GANTT_API_KEY) loadGanttObjectives();
+  document.getElementById('gantt-overlay').classList.add('open');
+}
+function closeGanttSyncModal(){ document.getElementById('gantt-overlay').classList.remove('open'); }
+
+function gsStatus(msg, type){
+  var el = document.getElementById('gs-status');
+  if(!msg){ el.className='gs-status'; el.textContent=''; return; }
+  el.className = 'gs-status show ' + (type||'');
+  el.textContent = msg;
+}
+
+function renderGanttGateList(){
+  var el = document.getElementById('gs-gate-list');
+  var sg = sortedGates();
+  if(!sg.length){ el.innerHTML='<div style="font-size:11px;color:#bbb;">No stage-gates added yet.</div>'; return; }
+  el.innerHTML = sg.map(function(entry, n){
+    var m = entry.m;
+    var linked  = m.ganttMilestoneId ? '<span class="gs-linked">Linked (ID\u00a0'+m.ganttMilestoneId+')</span>' : '<span class="gs-unlinked">Not yet pushed</span>';
+    var dateStr = m.date ? formatDate(m.date) : '<span style="color:#E24B4A;font-size:10px;">No date &mdash; will skip</span>';
+    return '<div class="gs-gate-row">'+
+      '<span class="gate-tag" style="flex-shrink:0;">G'+(n+1)+'</span>'+
+      '<span style="flex:1;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(m.label)+'">'+esc(m.label)+'</span>'+
+      '<span style="font-size:11px;color:#888;flex-shrink:0;">'+dateStr+'</span>'+
+      linked+
+    '</div>';
+  }).join('');
+}
+
+/* Quarter helpers */
+function pad2(n){ return n < 10 ? '0'+n : String(n); }
+function quarterToRange(year, q){
+  var y = parseInt(year), qi = parseInt(q);
+  var ms = (qi-1)*3;
+  var lastDay = new Date(y, ms+3, 0).getDate();
+  return { start: y+'-'+pad2(ms+1)+'-01', end: y+'-'+pad2(ms+3)+'-'+pad2(lastDay) };
+}
+
+function onObjectiveSelect(){
+  var sel = document.getElementById('gs-parentid');
+  if(!sel.value) return;
+  /* Persist immediately so the background poll picks up the new objective */
+  saveGanttSettings();
+  /* Strip "[FC] " / "[EZ] " division prefix from option label */
+  var optText = sel.options[sel.selectedIndex].text;
+  var name = optText.replace(/^\[[^\]]+\]\s*/, '').trim();
+  var year = parseInt(document.getElementById('gs-year').value)    || new Date().getFullYear();
+  var q    = parseInt(document.getElementById('gs-quarter').value) || 1;
+  document.getElementById('proj').value   = name;
+  document.getElementById('qtr').value    = 'Q'+q+' '+year;
+  document.getElementById('qstart').value = year+'-'+pad2((q-1)*3+1)+'-01';
+  save(); updateTitle(); render();
+}
+
+async function loadGanttObjectives(){
+  /* Save only the credential/division fields — don't touch parentId yet */
+  var binId  = document.getElementById('gs-binid').value.trim();
+  var apiKey = document.getElementById('gs-apikey').value.trim();
+  var division = document.getElementById('gs-division').value;
+  var year   = parseInt(document.getElementById('gs-year').value)    || new Date().getFullYear();
+  var quarter= parseInt(document.getElementById('gs-quarter').value) || 1;
+  if(!binId || !apiKey){ gsStatus('Enter bin ID and API key first.', 'error'); return; }
+  gsStatus('Loading objectives\u2026', 'loading');
+  try {
+    var resp = await fetch('https://api.jsonbin.io/v3/b/'+binId+'/latest',{
+      headers:{'Content-Type':'application/json','X-Master-Key':apiKey,'X-Bin-Meta':'false'}
+    });
+    if(!resp.ok){ gsStatus('Could not read Gantt bin (HTTP\u00a0'+resp.status+').', 'error'); return; }
+    var wrapper   = await resp.json();
+    var ganttData = wrapper.record || wrapper;
+    var projects  = ganttData.projects || [];
+    ganttCache = projects;
+    var qr = quarterToRange(year, quarter);
+    var objectives = projects.filter(function(p){
+      if(p.projectType !== 'objective') return false;
+      if(division && p.division !== division) return false;
+      if(p.end   && p.end   < qr.start) return false;
+      if(p.start && p.start > qr.end)   return false;
+      return true;
+    }).sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
+    var sel = document.getElementById('gs-parentid');
+    var savedParentId = loadGanttSettings().parentId;
+    if(!objectives.length){
+      sel.innerHTML = '<option value="">\u2014 No objectives found for this division / quarter \u2014</option>';
+      gsStatus('No objectives found for Q'+quarter+' '+year+' in '+division+'.', 'info');
+      return;
+    }
+    var divL = {fuelcell:'FC', electrolyzer:'EZ', exploration:'EX'};
+    sel.innerHTML = '<option value="">\u2014 Select an objective \u2014</option>'+
+      objectives.map(function(p){
+        return '<option value="'+p.id+'"'+(p.id===savedParentId?' selected':'')+'>'+esc('['+( divL[p.division]||'' )+'] '+p.name)+'</option>';
+      }).join('');
+    gsStatus('Found '+objectives.length+' objective'+(objectives.length!==1?'s':'')+'. Select one to sync.', 'success');
+  } catch(e){ gsStatus('Error: '+e.message, 'error'); }
+}
+
+function buildGanttStageGate(gate, settings, prevGateDate, prevGanttId){
+  var hasKpis = gate.kpis && gate.kpis.length > 0;
+  var startDate = computeGateStart(gate, prevGateDate, settings.parentId);
+  /* Clamp: start must not exceed end */
+  if(gate.date && startDate > gate.date) startDate = gate.date;
+
+  /* Dependencies array: sequential dep uses hidden:true so the Gantt cascades
+     but draws no arrow. Cross-objective deps are visible (arrow shown). */
+  var deps = [];
+  if(prevGanttId) deps.push({ id:prevGanttId, type:'blocking', leadDays:0, hidden:true });
+  (gate.dependencies||[]).forEach(function(d){
+    deps.push({ id:d.ganttProjectId, type:d.type||'blocking', leadDays:0 });
+  });
+
+  return {
+    name: gate.label || 'Gate', start: startDate, end: gate.date,
+    division: settings.division || 'fuelcell', effortType: 'NRE',
+    projectType: 'task', isStageGate: true,
+    stageGateId: 'qt-'+gate.gid,
+    parentId: settings.parentId || null,
+    progress: gate.status==='hit' ? 100 : 0,
+    progressType: hasKpis ? 'kpi' : 'percentage',
+    manuallyCompleted: gate.status === 'hit',
+    completedDate: gate.completedDate || (gate.status==='hit' ? gate.date : null),
+    /* Tracker locked dates = Gantt baselines, not Gantt locks.
+       Do NOT include locked here — on updates the existing value is preserved
+       via Object.assign; on creation we explicitly set locked:false below. */
+    baselineEndDate: gate.lockedDate || null,
+    kpis: (gate.kpis||[]).map(function(k){
+      return {name:k.name+(k.unit?' ('+k.unit+')':''), direction:'increase', target:parseFloat(k.target)||0, current:0};
+    }),
+    milestoneKpis:[], notes: gate.intention || '',
+    resources:[], equipment:[],
+    dependencies: deps,
+    keyResults:[],
+    stageGates:[], stageGatesLinked:true, associatedObjectives:[], datePrecision:'exact'
+  };
+}
+
+async function pushToGantt(){
+  var settings = saveGanttSettings();
+  if(!settings.binId || !settings.apiKey){ gsStatus('Enter credentials first.', 'error'); return; }
+  if(!settings.parentId){ gsStatus('Select an objective first.', 'error'); return; }
+  var sg = sortedGates();
+  if(!sg.length){ gsStatus('No tracker gates to push.', 'error'); return; }
+  gsStatus('Fetching Gantt data\u2026', 'loading');
+  try {
+    var resp = await fetch('https://api.jsonbin.io/v3/b/'+settings.binId+'/latest',{
+      headers:{'Content-Type':'application/json','X-Master-Key':settings.apiKey,'X-Bin-Meta':'false'}
+    });
+    if(!resp.ok){ gsStatus('Could not read Gantt bin (HTTP\u00a0'+resp.status+').', 'error'); return; }
+    var wrapper   = await resp.json();
+    var ganttData = wrapper.record || wrapper;
+    if(!Array.isArray(ganttData.projects)) ganttData.projects = [];
+    ganttCache = ganttData.projects; /* keep live reference for dep picker */
+    var objIdx = -1;
+    for(var j=0; j<ganttData.projects.length; j++){ if(ganttData.projects[j].id===settings.parentId){ objIdx=j; break; } }
+    if(objIdx < 0){ gsStatus('Selected objective not found in Gantt bin.', 'error'); return; }
+    var maxId = 9999;
+    for(var j=0; j<ganttData.projects.length; j++){ if(typeof ganttData.projects[j].id==='number' && ganttData.projects[j].id>maxId) maxId=ganttData.projects[j].id; }
+    var nextId=maxId+1, created=0, updated=0, skipped=0;
+    var obj2 = ganttData.projects[objIdx];
+    var existingTemplate2 = (obj2.stageGates||[]).slice(); /* snapshot before rebuild */
+    var prevGateEnd2 = '', prevGanttId2 = null;
+    for(var n=0; n<sg.length; n++){
+      var gate = sg[n].m;
+      if(!gate.date){ skipped++; continue; }
+      /* If no link yet, try to adopt an existing Gantt-native sub-project by name */
+      if(!gate.ganttMilestoneId){
+        for(var t=0; t<existingTemplate2.length; t++){
+          var te=existingTemplate2[t];
+          if(te.subProjectId && (te.name||'').trim().toLowerCase()===(gate.label||'').trim().toLowerCase()){
+            gate.ganttMilestoneId=te.subProjectId; break;
+          }
+        }
+      }
+      var fields = buildGanttStageGate(gate, settings, prevGateEnd2, prevGanttId2);
+      prevGateEnd2 = gate.date;
+      if(gate.ganttMilestoneId){
+        var found=-1;
+        for(var k=0; k<ganttData.projects.length; k++){ if(ganttData.projects[k].id===gate.ganttMilestoneId){ found=k; break; } }
+        if(found>=0){
+          var existProj = ganttData.projects[found];
+          var preservedSgId2 = (existProj.stageGateId && existProj.stageGateId.indexOf('sg-')===0) ? existProj.stageGateId : fields.stageGateId;
+          var updatedProj = Object.assign({},existProj,fields,{id:gate.ganttMilestoneId,parentId:settings.parentId,stageGateId:preservedSgId2});
+          ganttData.projects[found]=updatedProj; updated++;
+        }
+        else { var nid=nextId++; ganttData.projects.push(Object.assign({},fields,{locked:false,id:nid})); gate.ganttMilestoneId=nid; created++; }
+        prevGanttId2 = gate.ganttMilestoneId;
+      } else {
+        var nid=nextId++; ganttData.projects.push(Object.assign({},fields,{locked:false,id:nid})); gate.ganttMilestoneId=nid; created++;
+        prevGanttId2 = nid;
+      }
+    }
+    /* Remove tombstoned projects from Gantt before pushing */
+    if(deletedGanttIds.length){
+      ganttData.projects = ganttData.projects.filter(function(p){
+        return deletedGanttIds.indexOf(p.id) === -1;
+      });
+    }
+    /* Rebuild Objective stageGates[] template — preserve existing entry ids */
+    var obj = ganttData.projects[objIdx];
+    var filteredSg2 = sg.filter(function(e){ return !!e.m.date; });
+    obj.stageGates = filteredSg2.map(function(e,idx){
+      var g=e.m;
+      var tId='qt-'+g.gid;
+      for(var t=0; t<existingTemplate2.length; t++){
+        var te=existingTemplate2[t];
+        if((te.subProjectId && te.subProjectId===g.ganttMilestoneId) ||
+           (te.name||'').trim().toLowerCase()===(g.label||'').trim().toLowerCase()){
+          tId=te.id; break;
+        }
+      }
+      var prevGateDateT2 = idx > 0 ? filteredSg2[idx-1].m.date : '';
+      var gStart2 = computeGateStart(g, prevGateDateT2, settings.parentId);
+      if(g.date && gStart2 > g.date) gStart2 = g.date;
+      return { id:tId, name:g.label||'Gate', endDate:g.date, startDate:gStart2, subProjectId:g.ganttMilestoneId||null,
+        baselineEndDate:g.lockedDate||null,
+        kpis:(g.kpis||[]).map(function(k){ return {name:k.name+(k.unit?' ('+k.unit+')':''), direction:'increase', target:parseFloat(k.target)||0, current:0}; }) };
+    });
+    obj.stageGatesLinked = true;
+    writeTrackerData(ganttData, settings.parentId);
+    save();
+    var payload = Object.assign({},ganttData,{_version:(ganttData._version||0)+1,_savedBy:'Q Tracker',_savedAt:new Date().toISOString()});
+    gsStatus('Saving to Gantt\u2026', 'loading');
+    var putResp = await fetch('https://api.jsonbin.io/v3/b/'+settings.binId,{
+      method:'PUT', headers:{'Content-Type':'application/json','X-Master-Key':settings.apiKey}, body:JSON.stringify(payload)
+    });
+    if(putResp.ok){
+      _lastKnownVersion = (ganttData._version||0)+1;
+      var parts=[];
+      if(created) parts.push(created+' gate'+(created>1?'s':'')+' created');
+      if(updated) parts.push(updated+' updated');
+      if(skipped) parts.push(skipped+' skipped (no date)');
+      gsStatus('\u2713 Pushed: '+parts.join(', ')+'. Gantt picks up within 30s.', 'success');
+      renderGanttGateList();
+    } else {
+      var errText = await putResp.text().catch(function(){ return ''; });
+      gsStatus('Save failed (HTTP\u00a0'+putResp.status+'): '+errText.slice(0,120), 'error');
+    }
+  } catch(e){ gsStatus('Error: '+e.message, 'error'); }
+}
+
+/* When pulling deps from the Gantt, strip sequential deps (those that point to
+   another stage-gate sub-project within the same objective). Those are managed
+   entirely by the tracker's push logic and must not be stored in the tracker's
+   cross-objective dependencies list — otherwise they get duplicated on every push. */
+function filterCrossObjDeps(rawDeps, parentId){
+  return (rawDeps||[]).filter(function(d){
+    var depId = typeof d==='object' ? d.id : d;
+    if(!ganttCache) return true;
+    for(var i=0; i<ganttCache.length; i++){
+      var p = ganttCache[i];
+      if(parseInt(p.id,10)===parseInt(depId,10)){
+        /* Drop if it's a stage-gate sub-project belonging to the same objective */
+        if(p.isStageGate && parseInt(p.parentId,10)===parseInt(parentId,10)) return false;
+        break;
+      }
+    }
+    return true;
+  });
+}
+
+async function silentPullFromGantt(){
+  var s      = loadGanttSettings();
+  var binId  = GANTT_BIN_ID  || s.binId;
+  var apiKey = GANTT_API_KEY || s.apiKey;
+  if(!binId || !apiKey || !s.parentId){
+    var dot = document.getElementById('sync-dot');
+    if(dot){ dot.textContent = 'Sync not configured'; dot.className = 'sync-dot show error'; }
+    return;
+  }
+  try {
+    /* Step 1 — cheap metadata check (same pattern as Gantt's confPollForUpdates) */
+    var metaResp = await fetch('https://api.jsonbin.io/v3/b/'+binId+'/latest',{
+      headers:{'X-Master-Key':apiKey,'X-Bin-Meta':'true'}
+    });
+    if(!metaResp.ok) return;
+    var meta = await metaResp.json();
+    var remoteVersion = (meta.record && meta.record._version) || 0;
+
+    /* Always refresh dep-status badges */
+    var ts = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+    if(remoteVersion <= _lastKnownVersion){
+      /* Nothing changed — just re-render so dep badges stay current */
+      render();
+      showSyncIndicator('synced');
+      var dot2 = document.getElementById('sync-dot');
+      if(dot2) dot2.title = 'Last checked: '+ts+' \u2014 no changes (v'+remoteVersion+')';
+      return;
+    }
+
+    /* Step 2 — version bumped: full fetch and merge (like Gantt's applyLoadedData) */
+    showSyncIndicator('syncing');
+    var resp = await fetch('https://api.jsonbin.io/v3/b/'+binId+'/latest',{
+      headers:{'Content-Type':'application/json','X-Master-Key':apiKey,'X-Bin-Meta':'false'}
+    });
+    if(!resp.ok){ showSyncIndicator('error'); return; }
+    var wrapper   = await resp.json();
+    var ganttData = wrapper.record || wrapper;
+    var projects  = ganttData.projects || [];
+    ganttCache = projects;
+    _lastKnownVersion = ganttData._version || remoteVersion;
+
+    /* Read FMEA data stored by any tracker instance for this objective */
+    var fmeaChanged = readTrackerData(ganttData, s.parentId);
+
+    var obj = null;
+    for(var j=0; j<projects.length; j++){ if(projects[j].id===s.parentId){ obj=projects[j]; break; } }
+    if(!obj){ showSyncIndicator('error'); return; }
+
+    /* Find stage-gate sub-projects */
+    var subGates = [];
+    for(var j=0; j<projects.length; j++){
+      if(projects[j].parentId===s.parentId && projects[j].isStageGate) subGates.push(projects[j]);
+    }
+    if(!subGates.length && obj.stageGates && obj.stageGates.length){
+      for(var j=0; j<obj.stageGates.length; j++){
+        var sgDef=obj.stageGates[j], sub=null;
+        if(sgDef.subProjectId){
+          for(var k=0; k<projects.length; k++){
+            if(projects[k].id===sgDef.subProjectId && projects[k].parentId===s.parentId){ sub=projects[k]; break; }
+          }
+        }
+        if(sub) subGates.push(sub);
+        else subGates.push({id:null,name:sgDef.name||'Gate',end:sgDef.endDate||sgDef.end||'',kpis:sgDef.kpis||[],milestoneKpis:[],notes:'',manuallyCompleted:false,progress:0,locked:false,baselineEndDate:null,stageGateId:sgDef.id||''});
+      }
+    }
+    if(!subGates.length){ render(); showSyncIndicator('synced'); return; }
+    subGates.sort(function(a,b){ if(!a.end&&!b.end) return 0; if(!a.end) return 1; if(!b.end) return -1; return a.end<b.end?-1:a.end>b.end?1:0; });
+
+    /* Full merge — update existing gates AND create new ones */
+    var changed = false;
+
+    /* Build set of Gantt IDs present in this pull for deletion detection */
+    var ganttIdsInPull = {};
+    for(var i=0; i<subGates.length; i++){
+      var pid = typeof subGates[i].id==='number' ? subGates[i].id : null;
+      if(pid) ganttIdsInPull[pid] = true;
+    }
+
+    /* Detect Gantt-side deletions: tracker gate was linked but Gantt project is gone */
+    for(var k=milestones.length-1; k>=0; k--){
+      var gm = milestones[k];
+      if(!gm.ganttMilestoneId) continue;
+      if(deletedGanttIds.indexOf(gm.ganttMilestoneId) !== -1) continue; /* we deleted it */
+      if(!ganttIdsInPull[gm.ganttMilestoneId]){
+        /* Was linked, now missing from Gantt — treat as Gantt-side delete */
+        deletedGanttIds.push(gm.ganttMilestoneId);
+        milestones.splice(k, 1);
+        changed = true;
+      }
+    }
+
+    for(var i=0; i<subGates.length; i++){
+      var proj=subGates[i], projId=typeof proj.id==='number'?proj.id:null;
+
+      /* Skip tombstoned IDs — don't resurrect deleted gates */
+      if(projId && deletedGanttIds.indexOf(projId) !== -1) continue;
+
+      var existing=null;
+      var sgId=proj.stageGateId||'';
+      if(sgId.indexOf('qt-')===0){ var tgid=sgId.slice(3); for(var k=0; k<milestones.length; k++){ if(milestones[k].gid===tgid){ existing=milestones[k]; break; } } }
+      if(!existing && projId){ for(var k=0; k<milestones.length; k++){ if(milestones[k].ganttMilestoneId===projId){ existing=milestones[k]; break; } } }
+      if(!existing && proj.name){
+        var nl=(proj.name||'').trim().toLowerCase();
+        for(var k=0; k<milestones.length; k++){
+          if((milestones[k].label||'').trim().toLowerCase()===nl && !milestones[k].ganttMilestoneId){ existing=milestones[k]; break; }
+        }
+      }
+      var kpis=(proj.kpis||proj.milestoneKpis||[]).map(function(k){ return{name:k.name||'',target:String(k.target||''),unit:''}; });
+      if(existing){
+        if(projId) existing.ganttMilestoneId=projId;
+        if(proj.name && proj.name!==existing.label){ existing.label=proj.name; changed=true; }
+        if(proj.end && proj.end!==existing.date){
+          existing.date=proj.end;
+          /* If gate has a baseline and new date differs → catch-up plan */
+          if(existing.lockedDate && proj.end !== existing.lockedDate) existing.slipped=true;
+          else existing.slipped=false;
+          changed=true;
+        }
+        if((proj.manuallyCompleted||proj.progress>=100) && existing.status!=='hit'){ existing.status='hit'; if(proj.completedDate && !existing.completedDate) existing.completedDate=proj.completedDate; changed=true; }
+        if(proj.baselineEndDate && !existing.lockedDate){ existing.lockedDate=proj.baselineEndDate; existing.locked=true; changed=true; }
+        if(kpis.length && JSON.stringify(kpis)!==JSON.stringify(existing.kpis||[])){ existing.kpis=kpis; changed=true; }
+        if(proj.dependencies && proj.dependencies.length){
+          var crossDeps=filterCrossObjDeps(proj.dependencies, s.parentId);
+          var newDeps=crossDeps.map(function(d){
+            var depId=typeof d==='object'?d.id:d, depProj=null;
+            for(var x=0; x<ganttCache.length; x++){ if(ganttCache[x].id===depId){ depProj=ganttCache[x]; break; } }
+            return{ganttProjectId:depId,name:depProj?depProj.name:'Project '+depId,division:depProj?depProj.division||'':'',type:(typeof d==='object'?d.type:null)||'blocking'};
+          });
+          if(JSON.stringify(newDeps)!==JSON.stringify(existing.dependencies||[])){ existing.dependencies=newDeps; changed=true; }
+        }
+      } else {
+        /* New gate in Gantt not yet in tracker — create it */
+        var crossDeps2=filterCrossObjDeps(proj.dependencies, s.parentId);
+        var newDeps2=crossDeps2.filter(Boolean).map(function(d){
+          var depId=typeof d==='object'?d.id:d, depProj=null;
+          for(var x=0; x<(ganttCache||[]).length; x++){ if(ganttCache[x].id===depId){ depProj=ganttCache[x]; break; } }
+          return{ganttProjectId:depId,name:depProj?depProj.name:'Project '+depId,division:depProj?depProj.division||'':'',type:(typeof d==='object'?d.type:null)||'blocking'};
+        });
+        milestones.push({gid:genId(),label:proj.name||'Gate',date:proj.end||'',intention:proj.notes||'',kpis:kpis,
+          status:(proj.manuallyCompleted||proj.progress>=100)?'hit':'pending',
+          locked:!!proj.locked,lockedDate:proj.baselineEndDate||null,slipped:false,
+          completedDate:(proj.manuallyCompleted||proj.progress>=100)?(proj.completedDate||null):null,
+          ganttMilestoneId:projId,dependencies:newDeps2});
+        changed=true;
+      }
+    }
+    if(changed || fmeaChanged){ save(); render(); } else { render(); }
+    showSyncIndicator('synced');
+    var dot3 = document.getElementById('sync-dot');
+    if(dot3) dot3.title = 'Last synced: '+ts+' \u2014 v'+_lastKnownVersion+(changed?' (updated)':' (no changes)');
+
+  } catch(e){ console.warn('Silent pull error:',e.message); showSyncIndicator('error'); }
+}
+
+async function pullFromGantt(){
+  /* Read current modal values WITHOUT saving — we only save once we know parentId is valid */
+  var binId  = document.getElementById('gs-binid').value.trim()  || GANTT_BIN_ID;
+  var apiKey = document.getElementById('gs-apikey').value.trim() || GANTT_API_KEY;
+  var sel    = document.getElementById('gs-parentid');
+  var parentId = parseInt(sel.value) || null;
+  if(!binId || !apiKey){ gsStatus('Enter credentials first.', 'error'); return; }
+  if(!parentId){ gsStatus('Select an objective first.', 'error'); return; }
+  /* Only now persist — parentId is confirmed valid */
+  var settings = saveGanttSettings();
+  gsStatus('Fetching Gantt data\u2026', 'loading');
+  try {
+    var resp = await fetch('https://api.jsonbin.io/v3/b/'+settings.binId+'/latest',{
+      headers:{'Content-Type':'application/json','X-Master-Key':settings.apiKey,'X-Bin-Meta':'false'}
+    });
+    if(!resp.ok){ gsStatus('Could not read Gantt bin (HTTP\u00a0'+resp.status+').', 'error'); return; }
+    var wrapper   = await resp.json();
+    var ganttData = wrapper.record || wrapper;
+    var projects  = ganttData.projects || [];
+    ganttCache = projects;
+    _lastKnownVersion = ganttData._version || _lastKnownVersion;
+    var obj = null;
+    for(var j=0; j<projects.length; j++){ if(projects[j].id===settings.parentId){ obj=projects[j]; break; } }
+    if(!obj){ gsStatus('Selected objective not found in Gantt bin.', 'error'); return; }
+    /* Build fast lookups for matching existing tracker gates during import */
+    var trackerGids = {}, trackerMilestoneIds = {};
+    for(var k=0; k<milestones.length; k++){
+      trackerGids[milestones[k].gid] = true;
+      if(milestones[k].ganttMilestoneId) trackerMilestoneIds[milestones[k].ganttMilestoneId] = true;
+    }
+
+    /* Find all isStageGate sub-projects belonging to this objective.
+       We trust parentId as the ownership signal — the ownedByThis guard
+       in autoSyncToGantt prevents cross-tracker contamination going forward. */
+    var subGates = [];
+    for(var j=0; j<projects.length; j++){
+      var p = projects[j];
+      if(p.parentId===settings.parentId && p.isStageGate) subGates.push(p);
+    }
+    /* Fall back to stageGates[] template definitions — only if sub-project belongs to this objective */
+    if(!subGates.length && obj.stageGates && obj.stageGates.length){
+      for(var j=0; j<obj.stageGates.length; j++){
+        var sgDef = obj.stageGates[j];
+        var sub = null;
+        if(sgDef.subProjectId){
+          for(var k=0; k<projects.length; k++){
+            var candidate = projects[k];
+            /* Only accept sub-projects that belong to this objective */
+            if(candidate.id===sgDef.subProjectId && candidate.parentId===settings.parentId){ sub=candidate; break; }
+          }
+        }
+        if(sub) subGates.push(sub);
+        else subGates.push({id:null, name:sgDef.name||'Gate', end:sgDef.endDate||sgDef.end||'', kpis:sgDef.kpis||[], milestoneKpis:[], notes:'', manuallyCompleted:false, progress:0, locked:false, baselineEndDate:null, stageGateId:sgDef.id||''});
+      }
+    }
+    if(!subGates.length){
+      gsStatus('\u2713 Objective linked \u2014 no existing stage-gates found. Add gates in the tracker and push them to Gantt.', 'info');
+      return;
+    }
+    subGates.sort(function(a,b){ if(!a.end&&!b.end) return 0; if(!a.end) return 1; if(!b.end) return -1; return a.end<b.end?-1:a.end>b.end?1:0; });
+    var created=0, updated=0;
+    for(var i=0; i<subGates.length; i++){
+      var proj   = subGates[i];
+      var projId = typeof proj.id==='number' ? proj.id : null;
+      var existing = null;
+      /* Match by stageGateId 'qt-<gid>' (written when we pushed) */
+      var sgId = proj.stageGateId || '';
+      if(sgId.indexOf('qt-')===0){
+        var trackerGid = sgId.slice(3);
+        for(var k=0; k<milestones.length; k++){ if(milestones[k].gid===trackerGid){ existing=milestones[k]; break; } }
+      }
+      /* Fall back to ganttMilestoneId */
+      if(!existing && projId){ for(var k=0; k<milestones.length; k++){ if(milestones[k].ganttMilestoneId===projId){ existing=milestones[k]; break; } } }
+      var kpis = (proj.kpis||proj.milestoneKpis||[]).map(function(k){ return {name:k.name||'', target:String(k.target||''), unit:''}; });
+      if(existing){
+        existing.label = proj.name || existing.label;
+        if(proj.end && proj.end !== existing.date){
+          existing.date = proj.end;
+          /* If gate has a baseline and new date differs → catch-up plan */
+          if(existing.lockedDate && proj.end !== existing.lockedDate) existing.slipped=true;
+          else existing.slipped=false;
+        }
+        if(proj.manuallyCompleted||proj.progress>=100){ existing.status='hit'; if(proj.completedDate && !existing.completedDate) existing.completedDate=proj.completedDate; }
+        if(proj.baselineEndDate){ existing.lockedDate=proj.baselineEndDate; existing.locked=true; }
+        if(kpis.length) existing.kpis=kpis;
+        if(projId) existing.ganttMilestoneId=projId;
+        /* Sync cross-objective dependencies only — strip sequential same-objective deps */
+        if(proj.dependencies && proj.dependencies.length && ganttCache){
+          var crossDeps3=filterCrossObjDeps(proj.dependencies, settings.parentId);
+          existing.dependencies = crossDeps3.map(function(d){
+            var depId = typeof d==='object' ? d.id : d;
+            var depProj = null;
+            for(var x=0; x<ganttCache.length; x++){ if(ganttCache[x].id===depId){ depProj=ganttCache[x]; break; } }
+            return { ganttProjectId:depId, name:depProj?depProj.name:'Project '+depId, division:depProj?depProj.division||'':'', type:(typeof d==='object'?d.type:null)||'blocking' };
+          });
+        }
+        updated++;
+      } else {
+        var crossDeps4=filterCrossObjDeps(proj.dependencies, settings.parentId);
+        var newDeps = crossDeps4.filter(Boolean).map(function(d){
+          var depId = typeof d==='object' ? d.id : d;
+          var depProj = null;
+          for(var x=0; x<(ganttCache||[]).length; x++){ if(ganttCache[x].id===depId){ depProj=ganttCache[x]; break; } }
+          return {ganttProjectId:depId, name:depProj?depProj.name:'Project '+depId, division:depProj?depProj.division||'':'', type:(typeof d==='object'?d.type:null)||'blocking'};
+        });
+        milestones.push({gid:genId(), label:proj.name||'Gate', date:proj.end||'', intention:proj.notes||'', kpis:kpis,
+          status:(proj.manuallyCompleted||proj.progress>=100)?'hit':'pending',
+          locked:!!proj.locked, lockedDate:proj.baselineEndDate||null, slipped:false,
+          completedDate:(proj.manuallyCompleted||proj.progress>=100)?(proj.completedDate||null):null,
+          ganttMilestoneId:projId, dependencies:newDeps});
+        created++;
+      }
+    }
+    readTrackerData(ganttData, settings.parentId);
+    save(); render(); renderGanttGateList();
+    var parts=[];
+    if(created) parts.push(created+' gate'+(created!==1?'s':'')+' created');
+    if(updated) parts.push(updated+' updated');
+    gsStatus('\u2713 '+(parts.length?parts.join(', '):'Up to date \u2014 no changes')+'.', parts.length?'success':'info');
+  } catch(e){ gsStatus('Error: '+e.message, 'error'); }
+}
+
+/* Key events */
+document.getElementById('g-date').addEventListener('change', function(){ if(draftLocked) updateLockUI(); });
+document.addEventListener('keydown', function(e){
+  if(e.key==='Escape'){ closeKpiModal(); closeGateModal(); closeFmeaModal(); closeGanttSyncModal(); closeDepPickerModal(); }
+});
+
+async function autoInit(){
+  var params   = new URLSearchParams(window.location.search);
+  var nameParam= params.get('name');
+  var parentId = parseInt(params.get('parentId')) || null;
+  var division = params.get('division') || null;
+  var year     = parseInt(params.get('year'))    || null;
+  var quarter  = parseInt(params.get('quarter')) || null;
+  var pollSecs = parseInt(params.get('poll'))    || 30;
+
+  /* If ?name= is provided, resolve it to a parentId by fetching the Gantt bin */
+  if(nameParam && !parentId){
+    var s0 = loadGanttSettings();
+    var binId0  = GANTT_BIN_ID  || s0.binId;
+    var apiKey0 = GANTT_API_KEY || s0.apiKey;
+    if(binId0 && apiKey0){
+      try {
+        var r0 = await fetch('https://api.jsonbin.io/v3/b/'+binId0+'/latest',{
+          headers:{'Content-Type':'application/json','X-Master-Key':apiKey0,'X-Bin-Meta':'false'}
+        });
+        if(r0.ok){
+          var gd0 = await r0.json(); gd0 = gd0.record || gd0;
+          ganttCache = gd0.projects || [];
+          for(var j=0; j<(gd0.projects||[]).length; j++){
+            var p0 = gd0.projects[j];
+            if(p0.projectType==='objective' && p0.name===nameParam){
+              parentId = p0.id;
+              if(!division) division = p0.division || null;
+              break;
+            }
+          }
+        }
+      } catch(e){}
+    }
+  }
+
+  if(!parentId) return; /* no URL params — normal interactive mode */
+
+  /* Merge URL params into saved settings */
+  var saved  = loadGanttSettings();
+  var binId  = GANTT_BIN_ID  || saved.binId  || '';
+  var apiKey = GANTT_API_KEY || saved.apiKey || '';
+  var merged = {
+    binId:    binId,
+    apiKey:   apiKey,
+    division: division || saved.division || 'fuelcell',
+    year:     year     || saved.year     || new Date().getFullYear(),
+    quarter:  quarter  || saved.quarter  || 1,
+    parentId: parentId,
+    parentName: saved.parentName || 'Project '+parentId
+  };
+  /* Store in session variable — never in localStorage — so multiple
+     embedded pages on different Confluence pages don't overwrite each other */
+  _sessionSettings = merged;
+
+  /* Populate modal fields (visual only — sync now reads _sessionSettings directly) */
+  document.getElementById('gs-binid').value    = merged.binId;
+  document.getElementById('gs-apikey').value   = merged.apiKey;
+  document.getElementById('gs-division').value = merged.division;
+  document.getElementById('gs-year').value     = merged.year;
+  document.getElementById('gs-quarter').value  = merged.quarter;
+  var sel = document.getElementById('gs-parentid');
+  sel.innerHTML = '<option value="'+parentId+'" selected>'+parentId+'</option>';
+
+  if(!binId || !apiKey) return; /* credentials not configured */
+
+  /* Fetch objective name and fill tracker header */
+  try {
+    var resp = await fetch('https://api.jsonbin.io/v3/b/'+binId+'/latest',{
+      headers:{'Content-Type':'application/json','X-Master-Key':apiKey,'X-Bin-Meta':'false'}
+    });
+    if(resp.ok){
+      var gd = (await resp.json()); gd = gd.record || gd;
+      ganttCache = gd.projects || [];
+      var obj = null;
+      for(var j=0; j<(gd.projects||[]).length; j++){ if(gd.projects[j].id===parentId){ obj=gd.projects[j]; break; } }
+      if(obj){
+        sel.innerHTML = '<option value="'+parentId+'" selected>'+esc(obj.name||'Project '+parentId)+'</option>';
+        _sessionSettings.parentName = obj.name || _sessionSettings.parentName;
+      }
+    }
+  } catch(e){}
+
+  /* Fill quarter / project fields and pull stage-gates */
+  document.getElementById('qtr').value    = 'Q'+_sessionSettings.quarter+' '+_sessionSettings.year;
+  document.getElementById('qstart').value = _sessionSettings.year+'-'+pad2((_sessionSettings.quarter-1)*3+1)+'-01';
+  if(_sessionSettings.parentName) document.getElementById('proj').value = _sessionSettings.parentName.replace(/^\[[^\]]+\]\s*/,'');
+  save(); updateTitle(); render();
+
+  await silentPullFromGantt();
+
+  /* Restart poll at custom interval if ?poll= was specified */
+  if(params.get('poll') && pollSecs !== 30){
+    clearInterval(_pollInterval);
+    _pollInterval = setInterval(silentPullFromGantt, pollSecs * 1000);
+  }
+}
+
+loadSaved();
+render();
+/* Start polling before autoInit so it runs regardless of URL params.
+   autoInit may override pollSecs via ?poll= — clear and restart if so. */
+var _pollInterval = setInterval(silentPullFromGantt, 30000);
+autoInit();
+</script>
+</body>
+</html>
