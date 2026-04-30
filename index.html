@@ -22,7 +22,7 @@ button:hover{background:#f0f0ee;}
 .btn-sm{height:26px;font-size:11px;padding:0 10px;}
 
 /* Metrics */
-.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.25rem;}
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:1.25rem;}
 .mc{background:#efefed;border-radius:8px;padding:1rem;}
 .mc-label{font-size:11px;color:#666;margin-bottom:6px;}
 .mc-val{font-size:24px;font-weight:500;line-height:1;}
@@ -144,6 +144,40 @@ button:hover{background:#f0f0ee;}
 
 /* Toolbar */
 .toolbar{display:flex;justify-content:flex-end;gap:8px;padding-top:.5rem;border-top:.5px solid #ddd;}
+
+/* Key Results */
+.kr-card{background:#f7f7f5;border-radius:7px;padding:9px 10px;display:flex;flex-direction:column;gap:7px;}
+.kr-card-top{display:flex;align-items:center;gap:8px;}
+.kr-tag{font-size:10px;font-weight:500;font-family:monospace;color:#5C3D00;background:#FEF3DC;border-radius:3px;padding:2px 6px;flex-shrink:0;}
+.kr-name{flex:1;font-size:12px;font-weight:500;line-height:1.4;}
+.kr-tag:hover,.kr-name:hover{text-decoration:underline;text-decoration-color:#aaa;text-underline-offset:2px;}
+.kr-pct{font-size:12px;font-weight:600;min-width:36px;text-align:right;}
+.kr-bar{height:6px;background:#e5e5e3;border-radius:3px;overflow:hidden;}
+.kr-bar-fill{height:100%;border-radius:3px;transition:width .3s;}
+.kr-meta{display:flex;flex-direction:column;gap:5px;padding-top:6px;border-top:.5px solid #e5e5e3;}
+.kr-kpi-row{display:flex;align-items:center;gap:6px;font-size:11px;}
+.kr-kpi-name{flex:1;color:#555;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.kr-kpi-target{color:#888;flex-shrink:0;font-size:10px;}
+.kr-kpi-current{width:72px;font-size:11px;text-align:right;padding:3px 6px;height:26px;border-radius:4px;}
+.kr-kpi-unit{font-size:10px;color:#aaa;flex-shrink:0;min-width:24px;}
+.kr-kpi-dir{font-size:10px;color:#aaa;flex-shrink:0;}
+.kr-slider-row{display:flex;align-items:center;gap:8px;}
+.kr-slider-row input[type=range]{flex:1;min-width:0;height:6px;-webkit-appearance:none;appearance:none;background:#e5e5e3;border-radius:3px;outline:none;border:none;padding:0;}
+.kr-slider-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#185FA5;cursor:pointer;}
+.kr-slider-row span{font-size:11px;font-weight:500;min-width:30px;text-align:right;color:#555;}
+.kr-subkr-row{display:flex;align-items:center;gap:6px;font-size:11px;padding-left:8px;}
+.kr-subkr-name{flex:1;color:#555;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.kr-subkr-weight{font-size:10px;color:#aaa;flex-shrink:0;}
+body.readonly .kr-kpi-current,body.readonly .kr-slider-row input[type=range]{pointer-events:none;opacity:.6;}
+
+/* KR modal rows */
+.kr-draft-kpi{display:grid;grid-template-columns:2fr 70px 70px 60px auto;gap:6px;align-items:center;background:#f7f7f5;border-radius:5px;padding:5px 8px;font-size:11px;}
+.kr-draft-kpi input,.kr-draft-kpi select{font-size:11px;height:28px;padding:3px 6px;}
+.kr-draft-subkr{background:#f7f7f5;border-radius:6px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;}
+.kr-draft-subkr-head{display:grid;grid-template-columns:2fr 60px 90px auto;gap:6px;align-items:center;font-size:11px;}
+.kr-draft-subkr-head input,.kr-draft-subkr-head select{font-size:11px;height:28px;padding:3px 6px;}
+.kr-draft-subkr-kpis{padding-left:10px;display:flex;flex-direction:column;gap:4px;}
+.kr-draft-subkr-kpis .kr-draft-kpi{background:#fff;}
 .btn-save{background:#185FA5;color:#fff;border-color:#185FA5;}
 .btn-save:hover{background:#0C447C;}
 .btn-clear{color:#888;}
@@ -224,7 +258,9 @@ body.readonly .btn-clear,
 body.readonly .btn-save,
 body.readonly .del-btn,
 body.readonly .setup-row input,
-body.readonly .setup-row select { pointer-events:none; opacity:.4; }
+body.readonly .setup-row select,
+body.readonly .kr-tag[onclick],
+body.readonly .kr-name[onclick] { pointer-events:none; opacity:.4; }
 body.readonly .toolbar { display:none; }
 /* Gate dependencies */
 .gate-deps { display:flex; flex-direction:column; gap:4px; padding-top:6px; border-top:.5px solid #eaeae8; margin-top:2px; }
@@ -287,8 +323,10 @@ body.readonly .toolbar { display:none; }
   </div>
 </div>
 <div class="metrics">
-  <div class="mc"><div class="mc-label">Stage-gate pass rate</div><div class="mc-val" id="m-rate">&#8212;</div><div class="mc-sub" id="m-sub">No gates due yet</div></div>
+  <div class="mc"><div class="mc-label">Stage-gate health</div><div class="mc-val" id="sgh" style="font-size:14px;padding-top:5px;">&#8212;</div><div class="mc-sub" id="sgh-sub">Add gates to generate signal</div></div>
+  <div class="mc"><div class="mc-label">Stage-gate pass rate</div><div class="mc-val" id="m-rate">&#8212;</div><div class="mc-sub" id="m-sub">No gates due yet</div><div class="mc-sub" id="m-sub2" style="opacity:.75;"></div></div>
   <div class="mc"><div class="mc-label">Open high-risk items</div><div class="mc-val" id="r-rate">&#8212;</div><div class="mc-sub" id="r-sub">No FMEA items added</div></div>
+  <div class="mc"><div class="mc-label">Key Results</div><div class="mc-val" id="kr-rate">&#8212;</div><div class="mc-sub" id="kr-sub">No KRs synced</div></div>
   <div class="mc"><div class="mc-label">Overall signal</div><div class="mc-val" id="sig" style="font-size:14px;padding-top:5px;">&#8212;</div><div class="mc-sub" id="sig-sub">Add data to generate signal</div></div>
 </div>
 <div class="bar-area">
@@ -307,6 +345,18 @@ body.readonly .toolbar { display:none; }
       <button class="btn-primary btn-sm" onclick="openGateModal()">+ Add gate</button>
     </div>
     <div class="item-list" id="ms-list"></div>
+  </div>
+</div>
+<div class="full-col">
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title" onclick="toggleKrPanel()" style="cursor:pointer;user-select:none;">
+        <span id="kr-chevron" style="font-size:9px;margin-right:4px;display:inline-block;transition:transform .2s;">&#9660;</span>Key Results
+        <span id="kr-overall-inline" style="font-size:11px;font-weight:400;color:#888;margin-left:8px;"></span>
+      </span>
+      <button class="btn-primary btn-sm" onclick="openKrModal()">+ Add KR</button>
+    </div>
+    <div class="item-list" id="kr-list"></div>
   </div>
 </div>
 <div class="full-col">
@@ -474,6 +524,49 @@ body.readonly .toolbar { display:none; }
   </div>
 </div>
 
+<!-- Key Result modal -->
+<div class="overlay" id="kr-overlay" onclick="if(event.target===this)closeKrModal()">
+  <div class="modal" style="max-width:580px;">
+    <div class="modal-title" id="kr-modal-title">Add key result</div>
+    <div class="modal-field"><span class="lbl">Key result</span><input type="text" id="kr-name" placeholder="e.g. Achieve mass activity ≥ 50 A/g at 1.5V"></div>
+    <div class="modal-field"><span class="lbl">Tracking type</span>
+      <select id="kr-type" onchange="onKrTypeChange()">
+        <option value="percentage">% completion</option>
+        <option value="kpi">KPI-based</option>
+        <option value="subkr">Sub-key results</option>
+      </select>
+    </div>
+    <!-- Percentage -->
+    <div id="kr-pct-section" class="modal-field">
+      <span class="lbl">Progress</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <input type="range" id="kr-pct-slider" min="0" max="100" value="0" oninput="document.getElementById('kr-pct-val').textContent=this.value+'%'" style="flex:1;">
+        <span id="kr-pct-val" style="font-size:12px;font-weight:500;min-width:32px;text-align:right;">0%</span>
+      </div>
+    </div>
+    <!-- KPIs -->
+    <div id="kr-kpi-section" class="modal-field" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <span class="lbl" style="margin:0;">KPIs</span>
+        <button class="btn-sm" onclick="addDraftKrKpi()">+ Add KPI</button>
+      </div>
+      <div id="kr-kpi-list"></div>
+    </div>
+    <!-- Sub-KRs -->
+    <div id="kr-subkr-section" class="modal-field" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <span class="lbl" style="margin:0;">Sub-key results</span>
+        <button class="btn-sm" onclick="addDraftSubKr()">+ Add sub-KR</button>
+      </div>
+      <div id="kr-subkr-list"></div>
+    </div>
+    <div class="modal-actions">
+      <button onclick="closeKrModal()">Cancel</button>
+      <button class="btn-primary" id="kr-save-btn" onclick="saveKrFromModal()">Save KR</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ================================================================
 //  GANTT SYNC — paste credentials from your Gantt HTML file here
@@ -514,6 +607,7 @@ var draftKpis = [];
 var draftDeps = [];   /* [{ganttProjectId, name, division, type}] */
 var draftRisk = null;
 var ganttCache = null; /* last-fetched Gantt projects array */
+var keyResults = [];   /* synced from parent objective's keyResults[] */
 var editingGateIdx = null;
 var editingRiskIdx = null;
 var draftLocked = false;
@@ -535,6 +629,46 @@ function addOneDay(dateStr){
   var d = new Date(dateStr + 'T00:00:00');
   d.setDate(d.getDate() + 1);
   return d.toISOString().slice(0,10);
+}
+
+/* The effective end date of a gate for the purpose of cascading the next
+   gate's start date. A gate that was marked passed AFTER its due date
+   propagates its actual completion date to downstream gates; otherwise
+   (on-time pass, in-progress, or not yet due) use the due date. */
+function effectiveGateEnd(gate){
+  if(!gate) return '';
+  if(gate.status==='hit' && gate.completedDate && gate.date && gate.completedDate > gate.date){
+    return gate.completedDate;
+  }
+  return gate.date || '';
+}
+
+/* Walk gates in date order. For each gate that completed late (completedDate
+   > date), push every downstream UNLOCKED, UNCOMPLETED gate's due date
+   forward by at least one day past the prev gate's effective end. Mutates
+   milestones in place so the shift is visible in both the tracker UI and
+   the pushed Gantt payload. Returns true if any gate was shifted. */
+function cascadeSlipThroughGates(){
+  var sg = sortedGates().filter(function(e){ return !!e.m.date; });
+  var changed = false;
+  for(var i=1; i<sg.length; i++){
+    var prev = sg[i-1].m;
+    var curr = sg[i].m;
+    /* Don't shift if current gate is locked (user explicitly committed to date)
+       or already completed. */
+    if(curr.locked) continue;
+    if(curr.status === 'hit' || curr.status === 'missed') continue;
+    var prevEnd = effectiveGateEnd(prev);
+    if(!prevEnd) continue;
+    var earliest = addOneDay(prevEnd);
+    if(curr.date < earliest){
+      curr.date = earliest;
+      /* If the gate had a baseline, it's now slipped. */
+      if(curr.lockedDate && curr.date !== curr.lockedDate) curr.slipped = true;
+      changed = true;
+    }
+  }
+  return changed;
 }
 
 /* Compute the start date for a stage-gate Gantt sub-project.
@@ -683,7 +817,8 @@ function save(){
       qstart: document.getElementById('qstart').value,
       milestones: milestones,
       risks: risks,
-      deletedGanttIds: deletedGanttIds
+      deletedGanttIds: deletedGanttIds,
+      keyResults: keyResults
     }));
   } catch(e){}
 }
@@ -697,6 +832,7 @@ function loadSaved(){
     document.getElementById('qstart').value = d.qstart || '';
     milestones = (d.milestones || []).map(migrateGate);
     risks = (d.risks || []).map(migrateRisk);
+    keyResults = d.keyResults || [];
     deletedGanttIds = d.deletedGanttIds || [];
     updateTitle();
   } catch(e){}
@@ -793,7 +929,7 @@ function saveGate(){
       kpis:draftKpis.slice(), dependencies:draftDeps.slice(), status:'pending', locked:draftLocked,
       lockedDate:draftLocked?newDate:null, slipped:false, completedDate:null });
   }
-  closeGateModal(); save(); render(); autoSyncToGantt();
+  closeGateModal(); cascadeSlipThroughGates(); save(); render(); autoSyncToGantt();
 }
 
 /* KPI modal */
@@ -1069,22 +1205,22 @@ function saveFmea(){
   draftRisk.gateId  = document.getElementById('f-gate').value || null;
   if(editingRiskIdx !== null) risks[editingRiskIdx] = draftRisk;
   else risks.push(draftRisk);
-  closeFmeaModal(); save(); render();
+  closeFmeaModal(); save(); render(); autoSyncToGantt();
 }
 
-function setProblemStatus(ri, status){ risks[ri].status=status; save(); render(); }
-function setModeStatus(ri, mi, status){ risks[ri].modes[mi].status=status; save(); render(); }
-function setEffectStatus(ri, mi, ei, status){ risks[ri].modes[mi].effects[ei].status=status; save(); render(); }
+function setProblemStatus(ri, status){ risks[ri].status=status; save(); render(); autoSyncToGantt(); }
+function setModeStatus(ri, mi, status){ risks[ri].modes[mi].status=status; save(); render(); autoSyncToGantt(); }
+function setEffectStatus(ri, mi, ei, status){ risks[ri].modes[mi].effects[ei].status=status; save(); render(); autoSyncToGantt(); }
 
 /* Direct card updates */
-function setCauseStatus(ri, mi, ei, ci, status){ risks[ri].modes[mi].effects[ei].causes[ci].status = status; save(); render(); }
+function setCauseStatus(ri, mi, ei, ci, status){ risks[ri].modes[mi].effects[ei].causes[ci].status = status; save(); render(); autoSyncToGantt(); }
 function delCause(ri, mi, ei, ci){
   risks[ri].modes[mi].effects[ei].causes.splice(ci,1);
   if(!risks[ri].modes[mi].effects[ei].causes.length) risks[ri].modes[mi].effects.splice(ei,1);
   if(!risks[ri].modes[mi].effects.length) risks[ri].modes.splice(mi,1);
-  save(); render();
+  save(); render(); autoSyncToGantt();
 }
-function delRk(ri){ risks.splice(ri,1); save(); render(); }
+function delRk(ri){ risks.splice(ri,1); save(); render(); autoSyncToGantt(); }
 
 /* Gate actions */
 function setMs(i, status){
@@ -1110,6 +1246,8 @@ function setMs(i, status){
       if(nextM.status === 'active') nextM.status = 'pending';
     }
   }
+  /* Propagate any late-completion slip to downstream gates */
+  cascadeSlipThroughGates();
   save(); render(); autoSyncToGantt();
 }
 function delMs(i){
@@ -1127,7 +1265,307 @@ function toggleFmeaPanel(){
   document.getElementById('fmea-chevron').style.transform = fmeaCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)';
 }
 
-function render(){ try{ updateWeekDisplay(); renderMs(); renderRk(); renderMetrics(); renderBars(); } catch(e){ console.error('render error',e); } }
+
+/* Key Results helpers */
+function calculateKpiProgress(kpis){
+  if(!kpis || !kpis.length) return 0;
+  var measured = kpis.filter(function(k){ return !k.notMeasured; });
+  if(!measured.length) return 0;
+  var total = measured.reduce(function(s, k){
+    var target = parseFloat(k.target)||0, current = parseFloat(k.current)||0;
+    if(target === 0) return s + (current > 0 ? 100 : 0);
+    var pct;
+    if(k.direction === 'decrease') pct = target !== 0 ? Math.max(0, Math.min(100, (1 - (current - target) / target) * 100)) : 100;
+    else pct = Math.max(0, Math.min(100, (current / target) * 100));
+    return s + pct;
+  }, 0);
+  return Math.round(total / measured.length);
+}
+function calcSubKrProgress(subKrs){
+  if(!subKrs || !subKrs.length) return 0;
+  var totalW = 0, sum = 0;
+  subKrs.forEach(function(skr){
+    var w = parseFloat(skr.weight)||1;
+    var pct = skr.trackingType === 'kpi' ? calculateKpiProgress(skr.kpis||[]) : (skr.progress||0);
+    totalW += w; sum += w * pct;
+  });
+  return totalW > 0 ? Math.round(sum / totalW) : 0;
+}
+function getKrPct(kr){
+  if(kr.trackingType === 'kpi') return calculateKpiProgress(kr.kpis||[]);
+  if(kr.trackingType === 'subkr') return calcSubKrProgress(kr.subKrs||[]);
+  return kr.progress || 0;
+}
+function krOverallPct(){
+  if(!keyResults.length) return null;
+  var sum = keyResults.reduce(function(s,kr){ return s + getKrPct(kr); }, 0);
+  return Math.round(sum / keyResults.length);
+}
+function krBarColor(pct){ return pct >= 70 ? '#639922' : pct >= 40 ? '#BA7517' : '#E24B4A'; }
+
+function updateKrProgress(ki, val){
+  keyResults[ki].progress = parseInt(val)||0;
+  save(); renderKrs(); autoSyncToGantt();
+}
+function updateKrKpiCurrent(ki, kpi_i, val){
+  keyResults[ki].kpis[kpi_i].current = parseFloat(val)||0;
+  save(); renderKrs(); autoSyncToGantt();
+}
+function updateSubKrProgress(ki, si, val){
+  keyResults[ki].subKrs[si].progress = parseInt(val)||0;
+  save(); renderKrs(); autoSyncToGantt();
+}
+function updateSubKrKpiCurrent(ki, si, kpi_i, val){
+  keyResults[ki].subKrs[si].kpis[kpi_i].current = parseFloat(val)||0;
+  save(); renderKrs(); autoSyncToGantt();
+}
+
+/* ── KR modal ───────────────────────────────────────────────── */
+var editingKrIdx = null;
+var draftKr = null;
+
+function genKrId(){ return 'kr-' + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
+
+function openKrModal(){
+  editingKrIdx = null;
+  draftKr = { id:genKrId(), name:'', trackingType:'kpi', progress:0, kpis:[{ name:'', direction:'increase', target:0, current:0, units:'' }], subKrs:[] };
+  document.getElementById('kr-name').value = '';
+  document.getElementById('kr-type').value = 'kpi';
+  document.getElementById('kr-pct-slider').value = 0;
+  document.getElementById('kr-pct-val').textContent = '0%';
+  document.getElementById('kr-modal-title').textContent = 'Add key result';
+  document.getElementById('kr-save-btn').textContent = 'Save KR';
+  onKrTypeChange();
+  renderDraftKrKpis(); renderDraftSubKrs();
+  document.getElementById('kr-overlay').classList.add('open');
+  setTimeout(function(){ document.getElementById('kr-name').focus(); }, 50);
+}
+function openEditKrModal(ki){
+  editingKrIdx = ki;
+  draftKr = JSON.parse(JSON.stringify(keyResults[ki]));
+  if(!draftKr.kpis) draftKr.kpis = [];
+  if(!draftKr.subKrs) draftKr.subKrs = [];
+  document.getElementById('kr-name').value = draftKr.name || '';
+  document.getElementById('kr-type').value = draftKr.trackingType || 'percentage';
+  document.getElementById('kr-pct-slider').value = draftKr.progress || 0;
+  document.getElementById('kr-pct-val').textContent = (draftKr.progress||0)+'%';
+  document.getElementById('kr-modal-title').textContent = 'Edit key result';
+  document.getElementById('kr-save-btn').textContent = 'Save changes';
+  onKrTypeChange();
+  renderDraftKrKpis(); renderDraftSubKrs();
+  document.getElementById('kr-overlay').classList.add('open');
+  setTimeout(function(){ document.getElementById('kr-name').focus(); }, 50);
+}
+function closeKrModal(){ document.getElementById('kr-overlay').classList.remove('open'); }
+
+function onKrTypeChange(){
+  var t = document.getElementById('kr-type').value;
+  document.getElementById('kr-pct-section').style.display   = (t==='percentage') ? '' : 'none';
+  document.getElementById('kr-kpi-section').style.display    = (t==='kpi') ? '' : 'none';
+  document.getElementById('kr-subkr-section').style.display  = (t==='subkr') ? '' : 'none';
+}
+
+/* Draft KPI list for KR modal */
+function addDraftKrKpi(){
+  draftKr.kpis.push({ name:'', direction:'increase', target:0, current:0, units:'' });
+  renderDraftKrKpis();
+}
+function delDraftKrKpi(i){ draftKr.kpis.splice(i,1); renderDraftKrKpis(); }
+function renderDraftKrKpis(){
+  var el = document.getElementById('kr-kpi-list');
+  if(!draftKr.kpis.length){ el.innerHTML='<div class="modal-empty">No KPIs added</div>'; return; }
+  el.innerHTML = draftKr.kpis.map(function(k,i){
+    return '<div class="kr-draft-kpi">'+
+      '<input type="text" value="'+esc(k.name)+'" placeholder="KPI name" oninput="draftKr.kpis['+i+'].name=this.value">'+
+      '<select onchange="draftKr.kpis['+i+'].direction=this.value">'+
+        '<option value="increase"'+(k.direction==='increase'?' selected':'')+'>↑ Inc</option>'+
+        '<option value="decrease"'+(k.direction==='decrease'?' selected':'')+'>↓ Dec</option>'+
+        '<option value="maintain"'+(k.direction==='maintain'?' selected':'')+'>= Hold</option>'+
+      '</select>'+
+      '<input type="number" value="'+(k.target||0)+'" step="any" placeholder="Target" onchange="draftKr.kpis['+i+'].target=parseFloat(this.value)||0">'+
+      '<input type="text" value="'+esc(k.units||'')+'" placeholder="Units" oninput="draftKr.kpis['+i+'].units=this.value">'+
+      '<button class="del-btn" onclick="delDraftKrKpi('+i+')">&times;</button>'+
+    '</div>';
+  }).join('');
+}
+
+/* Draft sub-KR list */
+function addDraftSubKr(){
+  draftKr.subKrs.push({ name:'', weight:1, trackingType:'percentage', progress:0, kpis:[] });
+  renderDraftSubKrs();
+}
+function delDraftSubKr(i){ draftKr.subKrs.splice(i,1); renderDraftSubKrs(); }
+function addDraftSubKrKpi(si){
+  draftKr.subKrs[si].kpis.push({ name:'', direction:'increase', target:0, current:0, units:'' });
+  renderDraftSubKrs();
+}
+function delDraftSubKrKpi(si, ki){ draftKr.subKrs[si].kpis.splice(ki,1); renderDraftSubKrs(); }
+function onSubKrTypeChange(si, val){
+  draftKr.subKrs[si].trackingType = val;
+  renderDraftSubKrs();
+}
+function renderDraftSubKrs(){
+  var el = document.getElementById('kr-subkr-list');
+  if(!draftKr.subKrs.length){ el.innerHTML='<div class="modal-empty">No sub-KRs added</div>'; return; }
+  el.innerHTML = draftKr.subKrs.map(function(skr, si){
+    var kpiRows = '';
+    if(skr.trackingType==='kpi'){
+      kpiRows = '<div class="kr-draft-subkr-kpis">'+
+        (skr.kpis||[]).map(function(k,ki){
+          return '<div class="kr-draft-kpi">'+
+            '<input type="text" value="'+esc(k.name)+'" placeholder="KPI name" oninput="draftKr.subKrs['+si+'].kpis['+ki+'].name=this.value">'+
+            '<select onchange="draftKr.subKrs['+si+'].kpis['+ki+'].direction=this.value">'+
+              '<option value="increase"'+(k.direction==='increase'?' selected':'')+'>↑ Inc</option>'+
+              '<option value="decrease"'+(k.direction==='decrease'?' selected':'')+'>↓ Dec</option>'+
+              '<option value="maintain"'+(k.direction==='maintain'?' selected':'')+'>= Hold</option>'+
+            '</select>'+
+            '<input type="number" value="'+(k.target||0)+'" step="any" placeholder="Target" onchange="draftKr.subKrs['+si+'].kpis['+ki+'].target=parseFloat(this.value)||0">'+
+            '<input type="text" value="'+esc(k.units||'')+'" placeholder="Units" oninput="draftKr.subKrs['+si+'].kpis['+ki+'].units=this.value">'+
+            '<button class="del-btn" onclick="delDraftSubKrKpi('+si+','+ki+')">&times;</button>'+
+          '</div>';
+        }).join('')+
+        '<button class="btn-sm" onclick="addDraftSubKrKpi('+si+')" style="margin-top:2px;">+ Add KPI</button>'+
+      '</div>';
+    } else {
+      kpiRows = '<div style="display:flex;align-items:center;gap:8px;padding:0 2px;">'+
+        '<input type="range" min="0" max="100" value="'+(skr.progress||0)+'" oninput="draftKr.subKrs['+si+'].progress=parseInt(this.value);this.nextElementSibling.textContent=this.value+\'%\'" style="flex:1;">'+
+        '<span style="font-size:11px;min-width:28px;text-align:right;">'+(skr.progress||0)+'%</span>'+
+      '</div>';
+    }
+    return '<div class="kr-draft-subkr">'+
+      '<div class="kr-draft-subkr-head">'+
+        '<input type="text" value="'+esc(skr.name)+'" placeholder="Sub-KR name" oninput="draftKr.subKrs['+si+'].name=this.value">'+
+        '<input type="number" value="'+(skr.weight||1)+'" min="0.1" step="0.1" title="Weight" onchange="draftKr.subKrs['+si+'].weight=parseFloat(this.value)||1">'+
+        '<select onchange="onSubKrTypeChange('+si+',this.value)">'+
+          '<option value="percentage"'+(!skr.trackingType||skr.trackingType==='percentage'?' selected':'')+'>% completion</option>'+
+          '<option value="kpi"'+(skr.trackingType==='kpi'?' selected':'')+'>KPI-based</option>'+
+        '</select>'+
+        '<button class="del-btn" onclick="delDraftSubKr('+si+')">&times;</button>'+
+      '</div>'+
+      kpiRows+
+    '</div>';
+  }).join('');
+}
+
+function saveKrFromModal(){
+  var name = document.getElementById('kr-name').value.trim();
+  if(!name){ document.getElementById('kr-name').focus(); return; }
+  draftKr.name = name;
+  draftKr.trackingType = document.getElementById('kr-type').value;
+  if(draftKr.trackingType === 'percentage'){
+    draftKr.progress = parseInt(document.getElementById('kr-pct-slider').value)||0;
+  }
+  if(editingKrIdx !== null){
+    keyResults[editingKrIdx] = draftKr;
+  } else {
+    keyResults.push(draftKr);
+  }
+  closeKrModal(); save(); render(); autoSyncToGantt();
+}
+function deleteKr(ki){
+  keyResults.splice(ki,1);
+  save(); render(); autoSyncToGantt();
+}
+
+function renderKrs(){
+  var el = document.getElementById('kr-list');
+  if(krCollapsed) el.style.display = 'none';
+  var inl = document.getElementById('kr-overall-inline');
+  if(!keyResults.length){
+    el.innerHTML = '<div class="empty-msg">No key results added</div>';
+    if(inl) inl.textContent = '';
+    return;
+  }
+  var overall = krOverallPct();
+  if(inl && overall !== null) inl.innerHTML = '<span style="font-weight:500;color:'+krBarColor(overall)+'">'+overall+'%</span> overall';
+
+  el.innerHTML = keyResults.map(function(kr, ki){
+    var pct = getKrPct(kr);
+    var color = krBarColor(pct);
+    var dirSymbol = {increase:'\u2191', decrease:'\u2193', maintain:'='};
+
+    /* KPI rows */
+    var kpiHtml = '';
+    if(kr.trackingType === 'kpi' && kr.kpis && kr.kpis.length){
+      kpiHtml = '<div class="kr-meta">' + kr.kpis.map(function(kpi, kpi_i){
+        var pctK = 0, target = parseFloat(kpi.target)||0, current = parseFloat(kpi.current)||0;
+        if(target > 0){
+          if(kpi.direction==='decrease') pctK = Math.max(0,Math.min(100,(1-(current-target)/target)*100));
+          else pctK = Math.max(0,Math.min(100,(current/target)*100));
+        }
+        return '<div class="kr-kpi-row">'+
+          '<span class="kr-kpi-dir">'+(dirSymbol[kpi.direction]||'\u2191')+'</span>'+
+          '<span class="kr-kpi-name" title="'+esc(kpi.name)+'">'+esc(kpi.name)+'</span>'+
+          '<span class="kr-kpi-target">target: '+esc(String(kpi.target||0))+'</span>'+
+          '<input type="number" class="kr-kpi-current" value="'+(kpi.notMeasured?'':current)+'" step="any" placeholder="—" onchange="updateKrKpiCurrent('+ki+','+kpi_i+',parseFloat(this.value)||0)" title="Current value">'+
+          '<span class="kr-kpi-unit">'+esc(kpi.units||'')+'</span>'+
+          '<span style="font-size:10px;font-weight:500;min-width:28px;text-align:right;color:'+krBarColor(Math.round(pctK))+'">'+Math.round(pctK)+'%</span>'+
+        '</div>';
+      }).join('') + '</div>';
+    }
+
+    /* Percentage slider */
+    var sliderHtml = '';
+    if(!kr.trackingType || kr.trackingType === 'percentage'){
+      sliderHtml = '<div class="kr-meta"><div class="kr-slider-row">'+
+        '<input type="range" min="0" max="100" value="'+(kr.progress||0)+'" oninput="updateKrProgress('+ki+',this.value)">'+
+        '<span>'+(kr.progress||0)+'%</span>'+
+      '</div></div>';
+    }
+
+    /* Sub-KR rows */
+    var subKrHtml = '';
+    if(kr.trackingType === 'subkr' && kr.subKrs && kr.subKrs.length){
+      subKrHtml = '<div class="kr-meta">' + kr.subKrs.map(function(skr, si){
+        var skrPct = skr.trackingType === 'kpi' ? calculateKpiProgress(skr.kpis||[]) : (skr.progress||0);
+        var innerHtml = '';
+        if(skr.trackingType === 'kpi' && skr.kpis && skr.kpis.length){
+          innerHtml = skr.kpis.map(function(kpi, kpi_i){
+            return '<div class="kr-kpi-row" style="padding-left:16px;">'+
+              '<span class="kr-kpi-dir">'+(dirSymbol[kpi.direction]||'\u2191')+'</span>'+
+              '<span class="kr-kpi-name" title="'+esc(kpi.name)+'">'+esc(kpi.name)+'</span>'+
+              '<span class="kr-kpi-target">target: '+esc(String(kpi.target||0))+'</span>'+
+              '<input type="number" class="kr-kpi-current" value="'+(kpi.notMeasured?'':parseFloat(kpi.current)||0)+'" step="any" placeholder="—" onchange="updateSubKrKpiCurrent('+ki+','+si+','+kpi_i+',parseFloat(this.value)||0)">'+
+              '<span class="kr-kpi-unit">'+esc(kpi.units||'')+'</span>'+
+            '</div>';
+          }).join('');
+        } else {
+          innerHtml = '<div class="kr-slider-row" style="padding-left:16px;">'+
+            '<input type="range" min="0" max="100" value="'+(skr.progress||0)+'" oninput="updateSubKrProgress('+ki+','+si+',this.value)">'+
+            '<span>'+(skr.progress||0)+'%</span>'+
+          '</div>';
+        }
+        return '<div class="kr-subkr-row">'+
+          '<span class="kr-subkr-name" title="'+esc(skr.name)+'">'+esc(skr.name)+'</span>'+
+          '<span class="kr-subkr-weight">w'+esc(String(skr.weight||1))+'</span>'+
+          '<span style="font-size:11px;font-weight:500;min-width:28px;text-align:right;color:'+krBarColor(skrPct)+'">'+skrPct+'%</span>'+
+        '</div>' + innerHtml;
+      }).join('') + '</div>';
+    }
+
+    var typeLabel = kr.trackingType === 'kpi' ? 'KPI' : kr.trackingType === 'subkr' ? 'Sub-KR' : '%';
+
+    return '<div class="kr-card">'+
+      '<div class="kr-card-top">'+
+        '<span class="kr-tag" onclick="openEditKrModal('+ki+')" style="cursor:pointer;" title="Edit">KR'+(ki+1)+'</span>'+
+        '<span class="kr-name" onclick="openEditKrModal('+ki+')" style="cursor:pointer;" title="Edit">'+esc(kr.name)+'</span>'+
+        '<span style="font-size:9px;color:#aaa;flex-shrink:0;">'+typeLabel+'</span>'+
+        '<span class="kr-pct" style="color:'+color+'">'+pct+'%</span>'+
+        '<button class="del-btn" onclick="deleteKr('+ki+')" title="Remove" style="font-size:16px;">&times;</button>'+
+      '</div>'+
+      '<div class="kr-bar"><div class="kr-bar-fill" style="width:'+pct+'%;background:'+color+';"></div></div>'+
+      kpiHtml + sliderHtml + subKrHtml +
+    '</div>';
+  }).join('');
+}
+
+var krCollapsed = false;
+function toggleKrPanel(){
+  krCollapsed = !krCollapsed;
+  document.getElementById('kr-list').style.display = krCollapsed ? 'none' : '';
+  document.getElementById('kr-chevron').style.transform = krCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)';
+}
+function render(){ try{ updateWeekDisplay(); renderMs(); renderKrs(); renderRk(); renderMetrics(); renderBars(); } catch(e){ console.error('render error',e); } }
 
 function renderKpiTable(kpis){
   if(!kpis || !kpis.length) return '';
@@ -1367,27 +1805,103 @@ function renderRk(){
   }).join('');
 }
 
+function isOnTimeGate(m){
+  return !!(m.status==='hit' && m.completedDate && m.date && m.completedDate <= m.date);
+}
+
+function computeStageGateHealth(){
+  /* Current stage-gate: earliest-due unfinished; if all passed, final gate by date.
+     Undated gates are excluded from the current-gate search. */
+  var sg = sortedGates().filter(function(e){ return !!e.m.date; });
+  if(!sg.length) return { color:null, label:'\u2014', reason:'Add gates to generate signal' };
+
+  var current = null, currentIdx = -1;
+  for(var i=0; i<sg.length; i++){
+    var s = sg[i].m.status;
+    if(s !== 'hit' && s !== 'missed'){ current = sg[i].m; currentIdx = i; break; }
+  }
+  if(!current){ /* all gates done (passed or missed) — final gate is current */
+    currentIdx = sg.length-1; current = sg[currentIdx].m;
+  }
+  var previous = currentIdx > 0 ? sg[currentIdx-1].m : null;
+  var today    = new Date().toISOString().slice(0,10);
+
+  /* Rule 1 — previous gate missed → RED */
+  if(previous && previous.status === 'missed'){
+    return { color:'#E24B4A', label:'At risk', reason:'Previous gate missed' };
+  }
+
+  /* Rule 2 — current gate overdue */
+  if(current.status !== 'hit'){
+    if(current.locked && current.lockedDate){
+      if(today > current.lockedDate){
+        var pastCatchup = current.date && current.date > current.lockedDate;
+        return { color:'#E24B4A', label:'At risk',
+          reason: pastCatchup ? 'Current gate past baseline' : 'Current gate overdue' };
+      }
+    } else {
+      if(current.date && today > current.date){
+        return { color:'#E24B4A', label:'At risk', reason:'Current gate overdue' };
+      }
+    }
+  }
+
+  /* Rule 3 — previous gate passed late → ORANGE */
+  if(previous && previous.status === 'hit' && !isOnTimeGate(previous)){
+    return { color:'#BA7517', label:'Watch closely', reason:'Previous gate passed late' };
+  }
+
+  /* Rule 4 — GREEN */
+  return { color:'#639922', label:'On schedule', reason:'Current gate on track' };
+}
+
 function renderMetrics(){
   var w   = getCurWeek();
   var due = milestones.filter(function(m){ var gw=dateToWeek(m.date); return gw!==null && gw<=w; });
   var hit = due.filter(function(m){ return m.status==='hit'; });
-  var hr  = due.length ? Math.round(hit.length/due.length*100) : null;
+  var onTime = hit.filter(isOnTimeGate);
+  /* Headline = on-time pass rate (new primary metric) */
+  var otRate = due.length ? Math.round(onTime.length/due.length*100) : null;
   var openHigh  = risks.filter(function(r){ return worstUnresolvedRpn(r)>=200; }).length;
   var totalRisks = risks.length;
-  document.getElementById('m-rate').textContent = hr!==null ? hr+'%' : '\u2014';
-  document.getElementById('m-sub').textContent  = due.length ? hit.length+' of '+due.length+' due gates passed' : 'No gates due yet';
+
+  document.getElementById('m-rate').textContent = otRate!==null ? otRate+'%' : '\u2014';
+  document.getElementById('m-sub').textContent  = due.length ? onTime.length+' of '+due.length+' gates passed on time' : 'No gates due yet';
+  document.getElementById('m-sub2').textContent = due.length ? hit.length+' of '+due.length+' gates passed' : '';
+
   document.getElementById('r-rate').textContent = totalRisks ? openHigh : '\u2014';
   document.getElementById('r-sub').textContent  = totalRisks ? (openHigh===0 ? 'No high-RPN items open' : openHigh+' problem'+(openHigh>1?'s':'')+' with RPN \u2265 200') : 'No FMEA items added';
+
+  /* Stage-gate health indicator */
+  var sgh = computeStageGateHealth();
+  var sghEl = document.getElementById('sgh'), sghSub = document.getElementById('sgh-sub');
+  if(sgh.color){
+    sghEl.innerHTML = '<span class="sdot" style="background:'+sgh.color+';"></span>'+sgh.label;
+  } else {
+    sghEl.innerHTML = '\u2014';
+  }
+  sghSub.textContent = sgh.reason;
+
+  /* KR metric */
+  var krPct = krOverallPct();
+  var krEl = document.getElementById('kr-rate'), krSub = document.getElementById('kr-sub');
+  if(krPct !== null){
+    krEl.innerHTML = '<span style="color:'+krBarColor(krPct)+'">'+krPct+'%</span>';
+    var krDone = keyResults.filter(function(kr){ return getKrPct(kr)>=100; }).length;
+    krSub.textContent = krDone+' of '+keyResults.length+' KR'+(keyResults.length!==1?'s':'')+' complete';
+  } else { krEl.textContent = '\u2014'; krSub.textContent = 'No KRs synced'; }
+
+  /* Overall signal */
   var sigEl = document.getElementById('sig'), subEl = document.getElementById('sig-sub');
-  if(hr===null && !totalRisks){ sigEl.innerHTML='\u2014'; subEl.textContent='Add data to generate signal'; return; }
-  var h     = hr!==null ? hr : 100;
+  if(otRate===null && !totalRisks){ sigEl.innerHTML='\u2014'; subEl.textContent='Add data to generate signal'; return; }
+  var h     = otRate!==null ? otRate : 100;
   var slips = milestones.filter(function(m){ return m.slipped && m.status!=='hit' && m.status!=='missed'; }).length;
   var color, label, reason;
   if(slips>=2 || (slips>=1 && h<60) || openHigh>=3){
     color='#E24B4A'; label='At risk';
     reason = openHigh>=3 ? openHigh+' high-RPN problems unresolved' : slips+' catch-up plan'+(slips>1?'s':'')+' active';
   } else if(h>=70 && slips===0 && openHigh===0){
-    color='#639922'; label='On track'; reason='Gate pass rate healthy, no high-RPN items open';
+    color='#639922'; label='On track'; reason='On-time pass rate healthy, no high-RPN items open';
   } else if(h<50 || (w>=6 && openHigh>=2)){
     color='#E24B4A'; label='At risk'; reason='Recovery within quarter is unlikely';
   } else {
@@ -1406,9 +1920,13 @@ function renderBars(){
   for(var i=1; i<=13; i++){
     var due  = milestones.filter(function(m){ var gw=dateToWeek(m.date); return gw!==null && gw<=i; });
     var hit  = due.filter(function(m){ return m.status==='hit'; });
-    var rate = due.length ? hit.length/due.length : null;
-    var h    = rate!==null ? Math.round(rate*44) : 0;
-    var bg   = (i>w || rate===null) ? '#ddd' : rate>=0.7 ? '#639922' : rate>=0.5 ? '#BA7517' : '#E24B4A';
+    var onTime = hit.filter(isOnTimeGate);
+    /* Height = absolute completion rate */
+    var absRate = due.length ? hit.length/due.length : null;
+    var h       = absRate!==null ? Math.round(absRate*44) : 0;
+    /* Colour = on-time completion rate */
+    var otRate = due.length ? onTime.length/due.length : null;
+    var bg   = (i>w || otRate===null) ? '#ddd' : otRate>=0.7 ? '#639922' : otRate>=0.5 ? '#BA7517' : '#E24B4A';
     html += '<div class="bw"><div class="b'+(i===w?' b-now':'')+'" style="height:'+Math.max(h,2)+'px;background:'+bg+';width:100%;"></div><div class="bwk">'+i+'</div></div>';
   }
   document.getElementById('bars').innerHTML = html;
@@ -1416,7 +1934,7 @@ function renderBars(){
 
 function clearAll(){
   if(!confirm('Clear all data?')) return;
-  milestones=[]; risks=[];
+  milestones=[]; risks=[]; keyResults=[];
   ['proj','qtr','qstart'].forEach(function(id){ document.getElementById(id).value=''; });
   try{ localStorage.removeItem(getStorageKey()); } catch(e){}
   updateTitle(); render();
@@ -1448,6 +1966,8 @@ async function autoSyncToGantt(){
   var binId  = GANTT_BIN_ID  || s.binId;
   var apiKey = GANTT_API_KEY || s.apiKey;
   if(!binId || !apiKey || !s.parentId) return;
+  /* Cascade any late-completion slip forward before pushing */
+  if(cascadeSlipThroughGates()) save();
   showSyncIndicator('syncing');
   try {
     var resp = await fetch('https://api.jsonbin.io/v3/b/'+binId+'/latest',{
@@ -1482,7 +2002,7 @@ async function autoSyncToGantt(){
         }
       }
       var fields=buildGanttStageGate(gate,s,prevGateEnd,prevGanttId);
-      prevGateEnd = gate.date;
+      prevGateEnd = effectiveGateEnd(gate);
       if(gate.ganttMilestoneId){
         var found=-1;
         for(var k=0; k<ganttData.projects.length; k++){ if(ganttData.projects[k].id===gate.ganttMilestoneId){ found=k; break; } }
@@ -1522,8 +2042,8 @@ async function autoSyncToGantt(){
           tId=te.id; break;
         }
       }
-      /* Start = depEnd + 1 day via shared computeGateStart */
-      var prevGateDateT = idx > 0 ? filteredSg[idx-1].m.date : '';
+      /* Start = effective prev end + 1 day (accounts for late completion) */
+      var prevGateDateT = idx > 0 ? effectiveGateEnd(filteredSg[idx-1].m) : '';
       var gStart = computeGateStart(g, prevGateDateT, s.parentId);
       if(g.date && gStart > g.date) gStart = g.date;
       return{id:tId,name:g.label||'Gate',endDate:g.date,startDate:gStart,subProjectId:g.ganttMilestoneId||null,
@@ -1531,6 +2051,8 @@ async function autoSyncToGantt(){
         kpis:(g.kpis||[]).map(function(k){ return{name:k.name+(k.unit?' ('+k.unit+')':''),direction:'increase',target:parseFloat(k.target)||0,current:0}; })};
     });
     obj.stageGatesLinked=true;
+    /* Push key results back to objective */
+    if(keyResults.length) obj.keyResults = JSON.parse(JSON.stringify(keyResults));
     writeTrackerData(ganttData, s.parentId);
     save();
     var payload=Object.assign({},ganttData,{_version:(ganttData._version||0)+1,_savedBy:'Q Tracker',_savedAt:new Date().toISOString()});
@@ -1546,21 +2068,32 @@ async function autoSyncToGantt(){
 function writeTrackerData(ganttData, parentId){
   if(!parentId) return;
   if(!ganttData._trackerData) ganttData._trackerData = {};
-  ganttData._trackerData[String(parentId)] = { risks: risks, deletedGanttIds: deletedGanttIds };
+  ganttData._trackerData[String(parentId)] = { risks: risks, deletedGanttIds: deletedGanttIds, keyResults: keyResults };
 }
 function readTrackerData(ganttData, parentId){
-  if(!parentId || !ganttData._trackerData) return false;
-  var td = ganttData._trackerData[String(parentId)];
-  if(!td) return false;
+  if(!ganttData._trackerData) return false;
+  if(!parentId) return false;
+  var pidKey  = String(parentId);
+  var primary = ganttData._trackerData[pidKey];
+  if(!primary) return false;
+
   var changed = false;
-  /* Merge risks */
-  if(Array.isArray(td.risks) && JSON.stringify(td.risks) !== JSON.stringify(risks)){
-    risks = td.risks; changed = true;
+
+  /* Risks: read ONLY from this objective's key. Cross-key scanning would pull
+     risks from unrelated objectives via gid collisions or ungated entries.
+     If risks were saved under the wrong parentId, the right fix is at save
+     time, not at read time. */
+  var remoteRisks = Array.isArray(primary.risks) ? primary.risks : [];
+  if(remoteRisks.length && JSON.stringify(remoteRisks) !== JSON.stringify(risks)){
+    risks = remoteRisks; changed = true;
   }
+  /* If remote is empty and local has risks, do NOT wipe — local will be
+     pushed back on next autoSync. */
+
   /* Merge tombstones — union of both sides */
-  if(Array.isArray(td.deletedGanttIds)){
+  if(Array.isArray(primary.deletedGanttIds)){
     var before = deletedGanttIds.length;
-    td.deletedGanttIds.forEach(function(id){
+    primary.deletedGanttIds.forEach(function(id){
       if(deletedGanttIds.indexOf(id) === -1) deletedGanttIds.push(id);
     });
     if(deletedGanttIds.length !== before) changed = true;
@@ -1771,6 +2304,9 @@ async function pushToGantt(){
   if(!settings.parentId){ gsStatus('Select an objective first.', 'error'); return; }
   var sg = sortedGates();
   if(!sg.length){ gsStatus('No tracker gates to push.', 'error'); return; }
+  /* Cascade any late-completion slip forward before pushing */
+  if(cascadeSlipThroughGates()) save();
+  sg = sortedGates(); /* re-read in case cascade reordered anything */
   gsStatus('Fetching Gantt data\u2026', 'loading');
   try {
     var resp = await fetch('https://api.jsonbin.io/v3/b/'+settings.binId+'/latest',{
@@ -1803,7 +2339,7 @@ async function pushToGantt(){
         }
       }
       var fields = buildGanttStageGate(gate, settings, prevGateEnd2, prevGanttId2);
-      prevGateEnd2 = gate.date;
+      prevGateEnd2 = effectiveGateEnd(gate);
       if(gate.ganttMilestoneId){
         var found=-1;
         for(var k=0; k<ganttData.projects.length; k++){ if(ganttData.projects[k].id===gate.ganttMilestoneId){ found=k; break; } }
@@ -1839,7 +2375,7 @@ async function pushToGantt(){
           tId=te.id; break;
         }
       }
-      var prevGateDateT2 = idx > 0 ? filteredSg2[idx-1].m.date : '';
+      var prevGateDateT2 = idx > 0 ? effectiveGateEnd(filteredSg2[idx-1].m) : '';
       var gStart2 = computeGateStart(g, prevGateDateT2, settings.parentId);
       if(g.date && gStart2 > g.date) gStart2 = g.date;
       return { id:tId, name:g.label||'Gate', endDate:g.date, startDate:gStart2, subProjectId:g.ganttMilestoneId||null,
@@ -1847,6 +2383,8 @@ async function pushToGantt(){
         kpis:(g.kpis||[]).map(function(k){ return {name:k.name+(k.unit?' ('+k.unit+')':''), direction:'increase', target:parseFloat(k.target)||0, current:0}; }) };
     });
     obj.stageGatesLinked = true;
+    /* Push key results back to objective */
+    if(keyResults.length) obj.keyResults = JSON.parse(JSON.stringify(keyResults));
     writeTrackerData(ganttData, settings.parentId);
     save();
     var payload = Object.assign({},ganttData,{_version:(ganttData._version||0)+1,_savedBy:'Q Tracker',_savedAt:new Date().toISOString()});
@@ -1937,6 +2475,14 @@ async function silentPullFromGantt(){
     for(var j=0; j<projects.length; j++){ if(projects[j].id===s.parentId){ obj=projects[j]; break; } }
     if(!obj){ showSyncIndicator('error'); return; }
 
+    /* Sync key results from objective (initialize before any returns below) */
+    var krChanged = false;
+    var remoteKrs = obj.keyResults || [];
+    if(remoteKrs.length && JSON.stringify(remoteKrs) !== JSON.stringify(keyResults)){
+      keyResults = JSON.parse(JSON.stringify(remoteKrs));
+      krChanged = true;
+    }
+
     /* Find stage-gate sub-projects */
     var subGates = [];
     for(var j=0; j<projects.length; j++){
@@ -1954,7 +2500,7 @@ async function silentPullFromGantt(){
         else subGates.push({id:null,name:sgDef.name||'Gate',end:sgDef.endDate||sgDef.end||'',kpis:sgDef.kpis||[],milestoneKpis:[],notes:'',manuallyCompleted:false,progress:0,locked:false,baselineEndDate:null,stageGateId:sgDef.id||''});
       }
     }
-    if(!subGates.length){ render(); showSyncIndicator('synced'); return; }
+    if(!subGates.length){ if(krChanged){ save(); render(); } else render(); showSyncIndicator('synced'); return; }
     subGates.sort(function(a,b){ if(!a.end&&!b.end) return 0; if(!a.end) return 1; if(!b.end) return -1; return a.end<b.end?-1:a.end>b.end?1:0; });
 
     /* Full merge — update existing gates AND create new ones */
@@ -2035,10 +2581,10 @@ async function silentPullFromGantt(){
         changed=true;
       }
     }
-    if(changed || fmeaChanged){ save(); render(); } else { render(); }
+    if(changed || fmeaChanged || krChanged){ save(); render(); } else { render(); }
     showSyncIndicator('synced');
     var dot3 = document.getElementById('sync-dot');
-    if(dot3) dot3.title = 'Last synced: '+ts+' \u2014 v'+_lastKnownVersion+(changed?' (updated)':' (no changes)');
+    if(dot3) dot3.title = 'Last synced: '+ts+' \u2014 v'+_lastKnownVersion+((changed||krChanged)?' (updated)':' (no changes)');
 
   } catch(e){ console.warn('Silent pull error:',e.message); showSyncIndicator('error'); }
 }
@@ -2067,6 +2613,9 @@ async function pullFromGantt(){
     var obj = null;
     for(var j=0; j<projects.length; j++){ if(projects[j].id===settings.parentId){ obj=projects[j]; break; } }
     if(!obj){ gsStatus('Selected objective not found in Gantt bin.', 'error'); return; }
+    /* Sync key results from objective */
+    var remoteKrs2 = obj.keyResults || [];
+    if(remoteKrs2.length) keyResults = JSON.parse(JSON.stringify(remoteKrs2));
     /* Build fast lookups for matching existing tracker gates during import */
     var trackerGids = {}, trackerMilestoneIds = {};
     for(var k=0; k<milestones.length; k++){
@@ -2168,7 +2717,7 @@ async function pullFromGantt(){
 /* Key events */
 document.getElementById('g-date').addEventListener('change', function(){ if(draftLocked) updateLockUI(); });
 document.addEventListener('keydown', function(e){
-  if(e.key==='Escape'){ closeKpiModal(); closeGateModal(); closeFmeaModal(); closeGanttSyncModal(); closeDepPickerModal(); }
+  if(e.key==='Escape'){ closeKpiModal(); closeGateModal(); closeFmeaModal(); closeGanttSyncModal(); closeDepPickerModal(); closeKrModal(); }
 });
 
 async function autoInit(){
