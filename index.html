@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>NLR - Southern - Celadyne Tracker</title>
+<title>NLR - Southern - Celadyne Project Tracker</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;background:#f7f7f5;color:#1a1a1a;padding:2rem;}
@@ -313,12 +313,20 @@ body.readonly .toolbar { display:none; }
 </head>
 <body>
 <div class="wrap">
-<h1>NLR - Southern - Celadyne Project Tracker <span id="proj-display"></span></h1>
+<h1 id="main-title">Quarter tracker <span id="proj-display"></span></h1>
 <div class="setup-row">
   <div><span class="lbl">Project</span><input type="text" id="proj" placeholder="Project name" oninput="save();updateTitle()"></div>
-  <div><span class="lbl">Quarter</span><input type="text" id="qtr" placeholder="e.g. Q2 2026" oninput="save();updateTitle()"></div>
-  <div><span class="lbl">Quarter start date</span><input type="date" id="qstart" onchange="save();render()"></div>
-  <div><span class="lbl">Current week</span>
+  <div><span class="lbl">Timespan</span>
+    <select id="timespan-mode" onchange="onTimespanModeChange()">
+      <option value="quarterly">Quarterly</option>
+      <option value="yearly">Yearly</option>
+      <option value="custom">Custom</option>
+    </select>
+  </div>
+  <div id="ts-label-field"><span class="lbl" id="ts-label-lbl">Quarter</span><input type="text" id="qtr" placeholder="e.g. Q2 2026" oninput="save();updateTitle()"></div>
+  <div id="ts-start-field"><span class="lbl" id="ts-start-lbl">Quarter start date</span><input type="date" id="qstart" onchange="save();render()"></div>
+  <div id="ts-end-field" style="display:none;"><span class="lbl">End date</span><input type="date" id="qend" onchange="save();render()"></div>
+  <div><span class="lbl" id="bucket-display-lbl">Current week</span>
     <div id="wk-display" style="height:34px;display:flex;align-items:center;font-size:14px;font-weight:600;color:#185FA5;">W&#8212;</div>
   </div>
 </div>
@@ -702,23 +710,178 @@ function computeGateStart(gate, prevGateDate, parentId){
 
 function genId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+/* ── Timespan & bar bucketing ───────────────────────────────── */
+function getTimespanMode(){
+  var sel = document.getElementById('timespan-mode');
+  return sel ? sel.value : 'quarterly';
+}
+function getTimespanStart(){
+  return document.getElementById('qstart').value || '';
+}
+function addDays(dateStr, n){
+  var d = new Date(dateStr+'T00:00:00');
+  d.setDate(d.getDate()+n);
+  return d.toISOString().slice(0,10);
+}
+function getTimespanEnd(){
+  var mode = getTimespanMode();
+  var start = getTimespanStart();
+  if(!start) return '';
+  if(mode === 'custom'){
+    return document.getElementById('qend').value || '';
+  }
+  /* Quarterly = 13 weeks (91 days), Yearly = 52 weeks (364 days) */
+  var days = (mode === 'yearly') ? 364 : 91;
+  return addDays(start, days - 1);
+}
+function getTimespanWeeks(){
+  var s = getTimespanStart(), e = getTimespanEnd();
+  if(!s || !e) return 13;
+  var ms = new Date(e+'T00:00:00') - new Date(s+'T00:00:00');
+  return Math.max(1, Math.ceil(ms / 86400000 / 7));
+}
+/* Bucket sizing per spec:
+   <26 weeks   → weekly
+   26-53 weeks → biweekly
+   >53 weeks   → monthly */
+function getBarBuckets(){
+  var weeks = getTimespanWeeks();
+  var s = getTimespanStart(), e = getTimespanEnd();
+  if(!s || !e) return { type:'weekly', count:13, edges:[] };
+  if(weeks < 26){
+    var edges = [];
+    for(var i=0; i<weeks; i++) edges.push({ start: addDays(s, i*7), end: addDays(s, i*7+6) });
+    return { type:'weekly', count:weeks, edges:edges, label:function(i){ return String(i+1); } };
+  }
+  if(weeks <= 53){
+    var n = Math.ceil(weeks/2), edges2 = [];
+    for(var i=0; i<n; i++){
+      var st = addDays(s, i*14);
+      var en = addDays(s, Math.min(i*14+13, weeks*7-1));
+      edges2.push({ start:st, end:en });
+    }
+    return { type:'biweekly', count:n, edges:edges2, label:function(i){ return String(i*2+1); } };
+  }
+  /* Monthly — use calendar months from start to end */
+  var sd = new Date(s+'T00:00:00'), ed = new Date(e+'T00:00:00');
+  var cur = new Date(sd.getFullYear(), sd.getMonth(), 1);
+  var monthEdges = [];
+  while(cur <= ed){
+    var mStart = (cur < sd) ? sd : cur;
+    var nextMonth = new Date(cur.getFullYear(), cur.getMonth()+1, 1);
+    var mEnd = (nextMonth > ed) ? ed : new Date(nextMonth.getTime() - 86400000);
+    monthEdges.push({
+      start: mStart.toISOString().slice(0,10),
+      end:   mEnd.toISOString().slice(0,10),
+      monthDate: new Date(cur)
+    });
+    cur = nextMonth;
+  }
+  var monthAbbrev = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return { type:'monthly', count:monthEdges.length, edges:monthEdges,
+    label:function(i){ return monthAbbrev[monthEdges[i].monthDate.getMonth()]; } };
+}
+function getCurBucket(){
+  var b = getBarBuckets();
+  var today = new Date().toISOString().slice(0,10);
+  for(var i=0; i<b.edges.length; i++){
+    if(today >= b.edges[i].start && today <= b.edges[i].end) return i;
+  }
+  /* Out of range */
+  if(b.edges.length && today < b.edges[0].start) return -1;
+  return b.edges.length - 1;
+}
+function dateToBucket(d){
+  if(!d) return null;
+  var b = getBarBuckets();
+  for(var i=0; i<b.edges.length; i++){
+    if(d >= b.edges[i].start && d <= b.edges[i].end) return i;
+  }
+  return null;
+}
+
+/* Legacy compatibility shims — week math against timespan start */
 function getCurWeek(){
-  var qs = document.getElementById('qstart').value;
+  var qs = getTimespanStart();
   if(!qs) return 1;
   var days = Math.floor((new Date().setHours(0,0,0,0) - new Date(qs+'T00:00:00').getTime()) / 86400000);
-  return Math.max(1, Math.min(13, Math.floor(days/7) + 1));
+  var maxWeeks = getTimespanWeeks();
+  return Math.max(1, Math.min(maxWeeks, Math.floor(days/7) + 1));
 }
 function updateWeekDisplay(){
-  var el = document.getElementById('wk-display');
+  var el  = document.getElementById('wk-display');
+  var lbl = document.getElementById('bucket-display-lbl');
   if(!el) return;
-  var qs = document.getElementById('qstart').value;
-  el.textContent = qs ? 'W'+getCurWeek() : 'W\u2014';
+  var qs = getTimespanStart();
+  var b = getBarBuckets();
+  if(!qs){ el.textContent = 'W\u2014'; return; }
+  var i = getCurBucket();
+  if(b.type === 'monthly'){
+    if(lbl) lbl.textContent = 'Current month';
+    el.textContent = (i>=0 && b.edges[i]) ? b.label(i) : '\u2014';
+  } else if(b.type === 'biweekly'){
+    if(lbl) lbl.textContent = 'Current week';
+    el.textContent = i>=0 ? 'W'+(i*2+1) : 'W\u2014';
+  } else {
+    if(lbl) lbl.textContent = 'Current week';
+    el.textContent = i>=0 ? 'W'+(i+1) : 'W\u2014';
+  }
 }
 
 function dateToWeek(d){
-  var qs = document.getElementById('qstart').value;
+  var qs = getTimespanStart();
   if(!qs || !d) return null;
-  return Math.max(1, Math.min(13, Math.ceil((new Date(d) - new Date(qs)) / (1000*60*60*24*7)) + 1));
+  var weeks = Math.ceil((new Date(d) - new Date(qs)) / (1000*60*60*24*7)) + 1;
+  return Math.max(1, Math.min(getTimespanWeeks(), weeks));
+}
+
+/* UI handler for timespan dropdown — toggle visible inputs and re-label */
+var _suppressSave = false;
+function onTimespanModeChange(){
+  var mode = getTimespanMode();
+  var labelLbl = document.getElementById('ts-label-lbl');
+  var startLbl = document.getElementById('ts-start-lbl');
+  var endField = document.getElementById('ts-end-field');
+  var labelField = document.getElementById('ts-label-field');
+  var qtrInput = document.getElementById('qtr');
+  if(mode === 'quarterly'){
+    labelField.style.display = ''; endField.style.display = 'none';
+    labelLbl.textContent = 'Quarter'; startLbl.textContent = 'Quarter start date';
+    qtrInput.placeholder = 'e.g. Q2 2026';
+  } else if(mode === 'yearly'){
+    labelField.style.display = ''; endField.style.display = 'none';
+    labelLbl.textContent = 'Year'; startLbl.textContent = 'Year start date';
+    qtrInput.placeholder = 'e.g. 2026';
+  } else { /* custom */
+    labelField.style.display = ''; endField.style.display = '';
+    labelLbl.textContent = 'Label'; startLbl.textContent = 'Start date';
+    qtrInput.placeholder = 'e.g. H2 2026, Phase 1, etc.';
+  }
+  if(!_suppressSave){ save(); updateTitle(); render(); }
+}
+
+/* Filter: is this gate within the currently visible timespan? */
+function gateInTimespan(m, sortedAll){
+  var ts0 = getTimespanStart(), ts1 = getTimespanEnd();
+  if(!ts0 || !ts1) return true; /* no timespan configured — show all */
+  var inRange = function(d){ return d && d >= ts0 && d <= ts1; };
+  /* Current OR original delivery date in range */
+  if(inRange(m.date)) return true;
+  if(inRange(m.lockedDate)) return true;
+  if(inRange(m.completedDate)) return true;
+  /* Start = previous gate's date (current OR baseline) */
+  if(sortedAll && sortedAll.length){
+    var idx = -1;
+    for(var i=0; i<sortedAll.length; i++){
+      if(sortedAll[i].m.gid === m.gid){ idx = i; break; }
+    }
+    if(idx > 0){
+      var prev = sortedAll[idx-1].m;
+      if(inRange(prev.date)) return true;
+      if(inRange(prev.lockedDate)) return true;
+    }
+  }
+  return false;
 }
 function formatDate(d){
   if(!d) return '&#8212;';
@@ -815,6 +978,8 @@ function save(){
       proj: document.getElementById('proj').value,
       qtr:  document.getElementById('qtr').value,
       qstart: document.getElementById('qstart').value,
+      qend: document.getElementById('qend').value,
+      timespanMode: getTimespanMode(),
       milestones: milestones,
       risks: risks,
       deletedGanttIds: deletedGanttIds,
@@ -830,6 +995,9 @@ function loadSaved(){
     document.getElementById('proj').value   = d.proj   || '';
     document.getElementById('qtr').value    = d.qtr    || '';
     document.getElementById('qstart').value = d.qstart || '';
+    document.getElementById('qend').value   = d.qend   || '';
+    if(d.timespanMode){ document.getElementById('timespan-mode').value = d.timespanMode; }
+    _suppressSave = true; onTimespanModeChange(); _suppressSave = false;
     milestones = (d.milestones || []).map(migrateGate);
     risks = (d.risks || []).map(migrateRisk);
     keyResults = d.keyResults || [];
@@ -838,8 +1006,17 @@ function loadSaved(){
   } catch(e){}
 }
 function updateTitle(){
+  var mode = getTimespanMode();
+  var titlePrefix = mode === 'yearly' ? 'Year tracker' : mode === 'custom' ? 'Tracker' : 'Quarter tracker';
+  var titleEl = document.getElementById('main-title');
+  if(titleEl){
+    /* preserve span#proj-display */
+    var proj = titleEl.querySelector('#proj-display');
+    titleEl.firstChild.textContent = titlePrefix + ' ';
+    if(proj) titleEl.appendChild(proj);
+  }
   var parts = [document.getElementById('proj').value, document.getElementById('qtr').value].filter(Boolean);
-  document.getElementById('proj-display').textContent = parts.length ? '&#8212; ' + parts.join(', ') : '';
+  document.getElementById('proj-display').textContent = parts.length ? '\u2014 ' + parts.join(', ') : '';
 }
 
 /* Gate modal */
@@ -1600,7 +1777,15 @@ function renderMs(){
   var w  = getCurWeek();
   if(!milestones.length){ el.innerHTML = '<div class="empty-msg">No stage-gates added</div>'; return; }
   var sg = sortedGates();
-  el.innerHTML = sg.map(function(entry, n){
+  /* Apply timespan filter — keep numbering based on full sorted list */
+  var visible = sg.filter(function(entry){ return gateInTimespan(entry.m, sg); });
+  var hiddenCount = sg.length - visible.length;
+  if(!visible.length){
+    el.innerHTML = '<div class="empty-msg">No stage-gates fall within the current timespan ('+sg.length+' hidden)</div>';
+    return;
+  }
+  el.innerHTML = visible.map(function(entry){
+    var n = sg.findIndex(function(s){ return s.m.gid === entry.m.gid; });
     var m = entry.m, i = entry.i, num = n+1;
     var gw  = dateToWeek(m.date);
     var due = gw !== null ? gw <= w : false;
@@ -1678,6 +1863,9 @@ function renderMs(){
         '<button class="seg-btn'+(m.status==='missed'?' seg-missed':'')+'" onclick="setMs('+i+',\'missed\')">Failed</button>'+
       '</div><button class="del-btn" onclick="delMs('+i+')" style="font-size:16px;">&times;</button></div></div>'+metaHtml+'</div>';
   }).join('');
+  if(hiddenCount > 0){
+    el.innerHTML = '<div style="font-size:11px;color:#888;padding:4px 0 8px;font-style:italic;">'+hiddenCount+' gate'+(hiddenCount>1?'s':'')+' outside this timespan</div>' + el.innerHTML;
+  }
 }
 
 function renderRk(){
@@ -1916,18 +2104,21 @@ function renderMetrics(){
 }
 
 function renderBars(){
-  var w = getCurWeek(), html = '';
-  for(var i=1; i<=13; i++){
-    var due  = milestones.filter(function(m){ var gw=dateToWeek(m.date); return gw!==null && gw<=i; });
+  var b = getBarBuckets();
+  var curIdx = getCurBucket(); /* may be -1 if before timespan */
+  var html = '';
+  for(var i=0; i<b.count; i++){
+    var bucketEnd = b.edges[i].end;
+    /* Gates due cumulatively up through this bucket's end */
+    var due = milestones.filter(function(m){ return m.date && m.date <= bucketEnd; });
     var hit  = due.filter(function(m){ return m.status==='hit'; });
     var onTime = hit.filter(isOnTimeGate);
-    /* Height = absolute completion rate */
     var absRate = due.length ? hit.length/due.length : null;
     var h       = absRate!==null ? Math.round(absRate*44) : 0;
-    /* Colour = on-time completion rate */
-    var otRate = due.length ? onTime.length/due.length : null;
-    var bg   = (i>w || otRate===null) ? '#ddd' : otRate>=0.7 ? '#639922' : otRate>=0.5 ? '#BA7517' : '#E24B4A';
-    html += '<div class="bw"><div class="b'+(i===w?' b-now':'')+'" style="height:'+Math.max(h,2)+'px;background:'+bg+';width:100%;"></div><div class="bwk">'+i+'</div></div>';
+    var otRate  = due.length ? onTime.length/due.length : null;
+    var bg = (i>curIdx || otRate===null) ? '#ddd' : otRate>=0.7 ? '#639922' : otRate>=0.5 ? '#BA7517' : '#E24B4A';
+    var lbl = b.label(i);
+    html += '<div class="bw"><div class="b'+(i===curIdx?' b-now':'')+'" style="height:'+Math.max(h,2)+'px;background:'+bg+';width:100%;"></div><div class="bwk">'+lbl+'</div></div>';
   }
   document.getElementById('bars').innerHTML = html;
 }
@@ -1935,7 +2126,9 @@ function renderBars(){
 function clearAll(){
   if(!confirm('Clear all data?')) return;
   milestones=[]; risks=[]; keyResults=[];
-  ['proj','qtr','qstart'].forEach(function(id){ document.getElementById(id).value=''; });
+  ['proj','qtr','qstart','qend'].forEach(function(id){ document.getElementById(id).value=''; });
+  document.getElementById('timespan-mode').value = 'quarterly';
+  _suppressSave = true; onTimespanModeChange(); _suppressSave = false;
   try{ localStorage.removeItem(getStorageKey()); } catch(e){}
   updateTitle(); render();
 }
